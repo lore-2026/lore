@@ -8,6 +8,7 @@ import { signOut } from 'firebase/auth';
 import { doc, getDoc, setDoc, updateDoc, deleteDoc, writeBatch } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { auth, db, storage } from '../../lib/firebase';
+import { resizeImageForAvatar } from '../../lib/imageUtils';
 import { useAuth } from '../../contexts/AuthContext';
 import ProfileTabs from '../../components/ProfileTabs';
 import { Pencil, X } from 'lucide-react';
@@ -115,7 +116,8 @@ export default function ProfilePage() {
     setUploading(true);
     try {
       const storageRef = ref(storage, `avatars/${user.uid}`);
-      await uploadBytes(storageRef, file);
+      const blob = await resizeImageForAvatar(file);
+      await uploadBytes(storageRef, blob);
       const url = await getDownloadURL(storageRef);
       await updateDoc(doc(db, 'users', user.uid), { photoURL: url });
       setPhotoURL(url);

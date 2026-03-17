@@ -125,7 +125,7 @@ export default function Navbar() {
                   onClick={() => router.push('/profile')}
                 >
                   {photoURL
-                    ? <Image src={photoURL} alt="Profile" className={styles.profileCircleImg} width={36} height={36} />
+                    ? <Image src={photoURL} alt="Profile" className={styles.profileCircleImg} width={36} height={36} priority />
                     : initials
                   }
                 </button>
