@@ -3,12 +3,13 @@
 import { useEffect, useState, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import Image from 'next/image';
 import { X } from 'lucide-react';
 import { doc, getDoc, setDoc, updateDoc, arrayUnion, arrayRemove } from 'firebase/firestore';
 import { auth, db } from '../../lib/firebase';
 import { useAuth } from '../../contexts/AuthContext';
 import ProfileTabs from '../../components/ProfileTabs';
+import AvatarImage from '../../components/AvatarImage';
+import ListUserAvatar, { listInitialsFromName } from '../../components/ListUserAvatar';
 import styles from './page.module.css';
 
 function UserContent() {
@@ -22,7 +23,14 @@ function UserContent() {
   const [listModalType, setListModalType] = useState(null); // 'followers' | 'following'
   const [listUsers, setListUsers] = useState([]);
   const [listLoading, setListLoading] = useState(false);
+  const [headerAvatarBroken, setHeaderAvatarBroken] = useState(false);
   const isSelf = user && selectedUserId && user.uid === selectedUserId;
+
+  const hasHeaderAvatarUrl = Boolean(targetUserData?.photoURLThumb);
+
+  useEffect(() => {
+    setHeaderAvatarBroken(false);
+  }, [selectedUserId, targetUserData?.photoURLThumb]);
 
   const loadTargetUser = async () => {
     const snap = await getDoc(doc(db, 'users', selectedUserId));
@@ -149,13 +157,22 @@ function UserContent() {
             <div className={styles.userInfoRow}>
               <div className={styles.identifierSection}>
                 <div className={styles.avatarCircle}>
-                  {targetUserData?.photoURL
-                    ? <Image src={targetUserData.photoURL} alt="Profile" className={styles.avatarImg} width={96} height={96} />
-                    : (
-                      <span className={styles.avatarInitials}>
-                        {fullName ? `${fullName.split(' ')[0][0]}${fullName.split(' ')[1]?.[0] || ''}`.toUpperCase() : '?'}
-                      </span>
-                    )}
+                  {hasHeaderAvatarUrl && !headerAvatarBroken ? (
+                    <AvatarImage
+                      thumbUrl={targetUserData?.photoURLThumb}
+                      photoUrl=""
+                      thumbOnly
+                      alt="Profile"
+                      className={styles.avatarImg}
+                      width={96}
+                      height={96}
+                      onExhausted={() => setHeaderAvatarBroken(true)}
+                    />
+                  ) : (
+                    <span className={styles.avatarInitials}>
+                      {fullName ? listInitialsFromName(fullName) : '?'}
+                    </span>
+                  )}
                 </div>
                 <div className={styles.nameBlock}>
                   <h2>{displayName}</h2>
@@ -234,10 +251,14 @@ function UserContent() {
                       <li key={u.uid}>
                         <Link href={`/user?uid=${u.uid}`} className={styles.modalListRow} onClick={closeListModal}>
                           <div className={styles.modalListAvatar}>
-                            {u.photoURL
-                              ? <Image src={u.photoURL} alt="" width={40} height={40} className={styles.modalListAvatarImg} />
-                              : <span className={styles.modalListInitials}>{name ? `${name.split(' ')[0][0]}${name.split(' ')[1]?.[0] || ''}`.toUpperCase() : '?'}</span>
-                            }
+                            <ListUserAvatar
+                              thumbUrl={u.photoURLThumb}
+                              photoUrl={u.photoURL}
+                              thumbOnly
+                              name={name}
+                              classNameImg={styles.modalListAvatarImg}
+                              classNameInitials={styles.modalListInitials}
+                            />
                           </div>
                           <div className={styles.modalListInfo}>
                             <span className={styles.modalListName}>{name}</span>

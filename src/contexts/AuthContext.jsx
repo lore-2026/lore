@@ -11,6 +11,8 @@ export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [initials, setInitials] = useState('');
   const [photoURL, setPhotoURL] = useState('');
+  /** Resized avatar for small UI (navbar, profile); falls back to photoURL when unset. */
+  const [photoURLThumb, setPhotoURLThumb] = useState('');
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -32,6 +34,7 @@ export function AuthProvider({ children }) {
             const last = data.lastname || '';
             setInitials((first.charAt(0) + last.charAt(0)).toUpperCase());
             setPhotoURL(data.photoURL || '');
+            setPhotoURLThumb(data.photoURLThumb || '');
           } else {
             const parts = firebaseUser.email
               .split(/[@.\s_]/)
@@ -40,15 +43,18 @@ export function AuthProvider({ children }) {
               .map((p) => p.charAt(0).toUpperCase());
             setInitials(parts.join(''));
             setPhotoURL('');
+            setPhotoURLThumb('');
           }
         } catch {
           setInitials('');
           setPhotoURL('');
+          setPhotoURLThumb('');
         }
       } else {
         setUser(null);
         setInitials('');
         setPhotoURL('');
+        setPhotoURLThumb('');
       }
       setLoading(false);
     });
@@ -61,7 +67,9 @@ export function AuthProvider({ children }) {
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, initials, photoURL, setPhotoURL, loading, signOut }}>
+    <AuthContext.Provider
+      value={{ user, initials, photoURL, photoURLThumb, setPhotoURL, setPhotoURLThumb, loading, signOut }}
+    >
       {children}
     </AuthContext.Provider>
   );

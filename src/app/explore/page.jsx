@@ -83,6 +83,31 @@ function debounce(fn, delay) {
   };
 }
 
+function exploreListInitials(fullName) {
+  if (!fullName || !fullName.trim()) return '?';
+  const parts = fullName.trim().split(/\s+/);
+  return `${parts[0][0]}${parts[1]?.[0] || ''}`.toUpperCase();
+}
+
+/** Explore profile cards: `photoURLSearch` only (no `photoURL` fallback). */
+function ExploreProfileAvatar({ photoURLSearch, fullName, classNameImg, classNameInitials }) {
+  const [failed, setFailed] = useState(false);
+  const url = typeof photoURLSearch === 'string' ? photoURLSearch.trim() : '';
+  if (!url || failed) {
+    return <span className={classNameInitials}>{exploreListInitials(fullName)}</span>;
+  }
+  return (
+    <Image
+      src={url}
+      alt=""
+      width={160}
+      height={160}
+      className={classNameImg}
+      onError={() => setFailed(true)}
+    />
+  );
+}
+
 export default function ExplorePage() {
   const [query, setQuery] = useState('');
   const [results, setResults] = useState(null); // null = empty state, [] = no results
@@ -263,13 +288,12 @@ export default function ExplorePage() {
                   >
                     <div className={styles.profileCardAvatar}>
                       <div className={styles.profileCardAvatarCircle}>
-                        {item.photoURL ? (
-                          <Image src={item.photoURL} alt="" width={100} height={100} className={styles.profileCardImg} />
-                        ) : (
-                          <span className={styles.profileCardInitials}>
-                            {fullName ? `${fullName.split(' ')[0][0]}${fullName.split(' ')[1]?.[0] || ''}`.toUpperCase() : '?'}
-                          </span>
-                        )}
+                        <ExploreProfileAvatar
+                          photoURLSearch={item.photoURLSearch}
+                          fullName={fullName}
+                          classNameImg={styles.profileCardImg}
+                          classNameInitials={styles.profileCardInitials}
+                        />
                       </div>
                     </div>
                     <div className={styles.profileCardInfo}>

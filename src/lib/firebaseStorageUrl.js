@@ -26,7 +26,8 @@ export function stripFirebaseStorageUrlToken(urlString) {
 }
 
 /**
- * @param {string} bucketName
+ * Public read URL without a download token (requires Storage rules to allow read for this object path).
+ * @param {string} bucketName - e.g. from NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET
  * @param {string} objectPath - e.g. `avatars/{uid}`
  */
 export function buildPublicFirebaseDownloadUrl(bucketName, objectPath) {
