@@ -264,11 +264,16 @@ function DetailsContent() {
                 if (!uSnap.exists()) return friend;
                 const uData = uSnap.data();
                 const fullName = `${uData.firstname || ''} ${uData.lastname || ''}`.trim();
+                const thumb = typeof uData.photoURLThumb === 'string' ? uData.photoURLThumb.trim() : '';
+                const photo = typeof uData.photoURL === 'string' ? uData.photoURL.trim() : '';
                 return {
                   ...friend,
                   displayName: fullName || null,
                   username: uData.username || null,
-                  photoURL: uData.photoURL || null,
+                  photoURL: photo || null,
+                  photoURLThumb: thumb || null,
+                  /** Same resolution as AvatarImage: thumb first, then full photo. */
+                  avatarUrl: thumb || photo || null,
                 };
               } catch {
                 return friend;
@@ -929,8 +934,8 @@ function DetailsContent() {
                                   {friendsForSeason.map(friend => (
                                     <div key={friend.uid} className={styles.friendBreakdownRow}>
                                       <div className={styles.friendAvatarCircle}>
-                                        {friend.photoURL ? (
-                                          <img src={friend.photoURL} alt={friend.displayName || friend.username || '?'} className={styles.friendAvatarImg} />
+                                        {friend.avatarUrl ? (
+                                          <img src={friend.avatarUrl} alt={friend.displayName || friend.username || '?'} className={styles.friendAvatarImg} />
                                         ) : (
                                           <span className={styles.friendAvatarInitials}>
                                             {(friend.displayName || friend.username || '?')[0].toUpperCase()}
@@ -1001,8 +1006,8 @@ function DetailsContent() {
                           {scoredFriends.map(friend => (
                             <div key={friend.uid} className={styles.friendBreakdownRow}>
                               <div className={styles.friendAvatarCircle}>
-                                {friend.photoURL ? (
-                                  <img src={friend.photoURL} alt={friend.displayName || friend.username || '?'} className={styles.friendAvatarImg} />
+                                {friend.avatarUrl ? (
+                                  <img src={friend.avatarUrl} alt={friend.displayName || friend.username || '?'} className={styles.friendAvatarImg} />
                                 ) : (
                                   <span className={styles.friendAvatarInitials}>
                                     {(friend.displayName || friend.username || '?')[0].toUpperCase()}
