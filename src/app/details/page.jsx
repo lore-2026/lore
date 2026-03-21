@@ -18,6 +18,16 @@ import DiscussionSection from '../../components/DiscussionSection';
 import { Repeat, Trash2, ChevronDown } from 'lucide-react';
 import styles from './page.module.css';
 
+/**
+ * `users/{uid}.ratingCount` should only reflect movies + whole-show TV ratings.
+ * Per-season TV ratings must not change this counter.
+ */
+function userRatingCountsTowardProfileTotal(mediaType, season) {
+  if (mediaType === 'movie') return true;
+  if (mediaType === 'tv') return season == null;
+  return false;
+}
+
 function DetailsContent() {
   const searchParams = useSearchParams();
   const id = searchParams.get('id');
@@ -418,7 +428,9 @@ function DetailsContent() {
 
       await saveRatings(user.uid, enriched);
       if (!existedInRatings && !isReranking) {
-        await incrementRatingCount(user.uid);
+        if (userRatingCountsTowardProfileTotal(mediaType, selectedSeason)) {
+          await incrementRatingCount(user.uid);
+        }
         autoPostDiscussionNote(max);
       }
       if (mediaType === 'tv') {
@@ -557,7 +569,13 @@ function DetailsContent() {
 
     const persistWrite = async () => {
       await saveRatings(user.uid, enriched);
-      if (!existedInRatings && !isReranking) await incrementRatingCount(user.uid);
+      if (
+        !existedInRatings
+        && !isReranking
+        && userRatingCountsTowardProfileTotal(mediaType, selectedSeason)
+      ) {
+        await incrementRatingCount(user.uid);
+      }
     };
 
     if (background) {
@@ -696,7 +714,9 @@ function DetailsContent() {
         (async () => {
           try {
             await saveRatings(user.uid, enriched);
-            await updateDoc(doc(db, 'users', user.uid), { ratingCount: increment(-1) });
+            if (userRatingCountsTowardProfileTotal(mediaType, targetSeason)) {
+              await updateDoc(doc(db, 'users', user.uid), { ratingCount: increment(-1) });
+            }
 
             if (mediaType === 'movie') {
               const mediaKey = `movie_${id}`;

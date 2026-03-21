@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { ChevronRight } from 'lucide-react';
@@ -9,15 +9,29 @@ import AvatarImage from './AvatarImage';
 import { publicAssetPath } from '../lib/publicPath';
 import styles from './Navbar.module.css';
 
+/** Isolated state + remount via `key` when URLs change (avoids setState in useEffect). */
+function NavbarProfileAvatar({ thumbUrl, photoUrl, initialsText, classNameImg }) {
+  const [avatarBroken, setAvatarBroken] = useState(false);
+  const hasAvatarUrl = Boolean(thumbUrl || photoUrl);
+  return hasAvatarUrl && !avatarBroken ? (
+    <AvatarImage
+      thumbUrl={thumbUrl}
+      photoUrl={photoUrl}
+      alt="Profile"
+      className={classNameImg}
+      width={36}
+      height={36}
+      priority
+      onExhausted={() => setAvatarBroken(true)}
+    />
+  ) : (
+    initialsText
+  );
+}
+
 export default function Navbar() {
   const router = useRouter();
   const { user, initials, photoURL, photoURLThumb, signOut, loading } = useAuth();
-  const [avatarBroken, setAvatarBroken] = useState(false);
-  const hasAvatarUrl = Boolean(photoURLThumb || photoURL);
-
-  useEffect(() => {
-    setAvatarBroken(false);
-  }, [photoURLThumb, photoURL]);
 
   const [menuOpen, setMenuOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
@@ -131,20 +145,13 @@ export default function Navbar() {
                   aria-label="User menu"
                   onClick={() => router.push('/profile')}
                 >
-                  {hasAvatarUrl && !avatarBroken ? (
-                    <AvatarImage
-                      thumbUrl={photoURLThumb}
-                      photoUrl={photoURL}
-                      alt="Profile"
-                      className={styles.profileCircleImg}
-                      width={36}
-                      height={36}
-                      priority
-                      onExhausted={() => setAvatarBroken(true)}
-                    />
-                  ) : (
-                    initials
-                  )}
+                  <NavbarProfileAvatar
+                    key={`${photoURLThumb ?? ''}|${photoURL ?? ''}`}
+                    thumbUrl={photoURLThumb}
+                    photoUrl={photoURL}
+                    initialsText={initials}
+                    classNameImg={styles.profileCircleImg}
+                  />
                 </button>
                 {userMenuOpen && (
                   <div className={styles.userDropdown} role="menu">

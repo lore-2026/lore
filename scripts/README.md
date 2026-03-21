@@ -85,3 +85,18 @@ node scripts/strip-firebase-storage-photo-url-tokens.js --uid=<uid> --yes
 ```
 
 Optional: `--fields=photoURL,photoURLSearch` (comma-separated). `--any-bucket` strips tokens for any `firebasestorage.googleapis.com` URL (default: only buckets matching your project’s default bucket names from the service account / `FIREBASE_STORAGE_BUCKET`).
+
+## reconcile-user-rating-count.js
+
+Sets **`users/{uid}.ratingCount`** to the number of **non-season** ratings: top-level docs under **`users/{uid}/ratings`** whose id starts with **`movie_`** or **`tv_`**. Season ratings are stored under **`tv_{id}/seasons/{n}`** and are not counted (matches app behavior after Details page fixes).
+
+**Usage:**
+
+```bash
+set GOOGLE_APPLICATION_CREDENTIALS=C:\path\to\service-account.json
+node scripts/reconcile-user-rating-count.js --dry-run
+node scripts/reconcile-user-rating-count.js --yes
+node scripts/reconcile-user-rating-count.js --uid=<uid> --yes
+```
+
+Logs a warning if any top-level rating doc id does not start with `movie_` or `tv_`.
