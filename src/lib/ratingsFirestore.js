@@ -12,12 +12,34 @@ import {
   getDoc,
   updateDoc,
   runTransaction,
+  increment,
 } from 'firebase/firestore';
 import { db } from './firebase';
 import { enrichRatingsWithScoreBasic } from './ratingsRanking';
 
 const BATCH_SIZE = 500;
-const AGGREGATE_FIELDS = { ratingCount: 0, sumScores: 0 };
+
+/** Firestore map keys under sentimentCounts (avoid hyphens in field paths). */
+const SENTIMENT_TO_FIELD = {
+  'not-good': 'notGood',
+  okay: 'okay',
+  good: 'good',
+  amazing: 'amazing',
+};
+
+export function normalizeSentiment(s) {
+  const key = s && typeof s === 'string' ? s : 'good';
+  return SENTIMENT_TO_FIELD[key] ? key : 'good';
+}
+
+function sentimentToFirestoreField(sentiment) {
+  return SENTIMENT_TO_FIELD[normalizeSentiment(sentiment)];
+}
+
+function sentimentIncrementPatch(sentiment, delta) {
+  const field = sentimentToFirestoreField(sentiment);
+  return { [`sentimentCounts.${field}`]: increment(delta) };
+}
 
 export function getRatingDocId(mediaType, mediaId, season) {
   if (mediaType === 'movie') return `movie_${mediaId}`;
@@ -46,20 +68,75 @@ function entryKey(mediaType, mediaId, season) {
 }
 
 /**
- * Get the overall average rating and count from the aggregate doc at mediaRatings/{mediaKey}.
+ * Real-time community sentiment for movies and whole-show TV only (season ratings excluded).
  * @param {string} mediaKey - e.g. movie_123 or tv_456
- * @returns {Promise<{ average: number, count: number } | null>}
+ * @returns {Promise<{ notGood: number, okay: number, good: number, amazing: number, total: number } | null>}
  */
-export async function getMediaAverageRating(mediaKey) {
+export async function getMediaSentimentCounts(mediaKey) {
   if (!db || !mediaKey) return null;
   const aggRef = doc(db, 'mediaRatings', mediaKey);
   const snap = await getDoc(aggRef);
   const data = snap.exists() ? snap.data() : null;
-  const count = data && typeof data.ratingCount === 'number' ? data.ratingCount : 0;
-  const sum = data && typeof data.sumScores === 'number' ? data.sumScores : 0;
-  if (count === 0) return null;
-  const average = Math.round((sum / count) * 10) / 10;
-  return { average, count };
+  const sc = data?.sentimentCounts && typeof data.sentimentCounts === 'object' ? data.sentimentCounts : {};
+  const notGood = typeof sc.notGood === 'number' ? sc.notGood : 0;
+  const okay = typeof sc.okay === 'number' ? sc.okay : 0;
+  const good = typeof sc.good === 'number' ? sc.good : 0;
+  const amazing = typeof sc.amazing === 'number' ? sc.amazing : 0;
+  const total = notGood + okay + good + amazing;
+  if (total === 0) return null;
+  return { notGood, okay, good, amazing, total };
+}
+
+/**
+ * Denormalized copy under mediaRatings + sentimentCounts on mediaRatings/{mediaKey} (non-season only).
+ * Call after writing users/{uid}/ratings.
+ */
+export async function upsertDenormalizedMediaRating(uid, entry) {
+  if (!db || !uid || !entry || entry.mediaId == null) return;
+  const mediaKey = getMediaKey(entry.mediaType === 'tv' ? 'tv' : 'movie', entry.mediaId);
+  const aggRef = doc(db, 'mediaRatings', mediaKey);
+  const userRef = doc(db, 'mediaRatings', mediaKey, 'userRatings', uid);
+  const ratingRef = entry.mediaType === 'tv' && entry.season != null
+    ? doc(userRef, 'seasons', String(entry.season))
+    : userRef;
+
+  const payload = {
+    uid,
+    mediaType: entry.mediaType === 'tv' ? 'tv' : 'movie',
+    mediaId: entry.mediaId,
+    sentiment: entry.sentiment,
+    mediaName: entry.mediaName ?? null,
+    note: entry.note ?? null,
+    score: entry.score ?? null,
+    scoreBasic: typeof entry.scoreBasic === 'number' ? entry.scoreBasic : null,
+    timestamp: entry.timestamp ?? null,
+    ...(entry.season != null && { season: entry.season }),
+  };
+
+  if (entry.mediaType === 'tv' && entry.season != null) {
+    await setDoc(ratingRef, payload, { merge: true });
+    return;
+  }
+
+  await runTransaction(db, async (transaction) => {
+    const existingSnap = await transaction.get(ratingRef);
+    const existed = existingSnap.exists();
+    const oldSentiment = existed ? normalizeSentiment(existingSnap.data().sentiment) : null;
+    const newSentiment = normalizeSentiment(entry.sentiment);
+
+    transaction.set(ratingRef, payload, { merge: true });
+
+    const aggUpdates = {};
+    if (!existed) {
+      Object.assign(aggUpdates, sentimentIncrementPatch(newSentiment, 1));
+    } else if (oldSentiment !== newSentiment) {
+      Object.assign(aggUpdates, sentimentIncrementPatch(oldSentiment, -1));
+      Object.assign(aggUpdates, sentimentIncrementPatch(newSentiment, 1));
+    }
+    if (Object.keys(aggUpdates).length) {
+      transaction.set(aggRef, aggUpdates, { merge: true });
+    }
+  });
 }
 
 /**
@@ -248,7 +325,7 @@ function parseUserRatingDocId(userRatingDocId) {
 }
 
 /**
- * Delete one user rating from mediaRatings and update the aggregate (ratingCount, sumScores).
+ * Delete one user rating from mediaRatings and adjust sentimentCounts (non-season only).
  * Call when a user removes a rating (saveRatings removal or details page delete).
  */
 export async function deleteMediaRatingEntry(mediaKey, ratingDocId) {
@@ -259,23 +336,16 @@ export async function deleteMediaRatingEntry(mediaKey, ratingDocId) {
   const userRatingRef = getDenormUserRatingRef(mediaKey, parsed.uid, parsed.season);
 
   await runTransaction(db, async (transaction) => {
-    const [ratingSnap, aggSnap] = await Promise.all([
-      transaction.get(userRatingRef),
-      transaction.get(aggRef),
-    ]);
-    const snapData = ratingSnap.exists() ? ratingSnap.data() : {};
-    const score =
-      typeof snapData.scoreBasic === 'number'
-        ? snapData.scoreBasic
-        : (typeof snapData.score === 'number' ? snapData.score : 0);
-    const agg = aggSnap.exists() ? aggSnap.data() : AGGREGATE_FIELDS;
-    const count = (typeof agg.ratingCount === 'number' ? agg.ratingCount : 0) - 1;
-    const sumScores = (typeof agg.sumScores === 'number' ? agg.sumScores : 0) - score;
-    const newCount = Math.max(0, count);
-    const newSum = newCount === 0 ? 0 : sumScores;
+    const ratingSnap = await transaction.get(userRatingRef);
+    const isNonSeason = parsed.season == null;
+    const sentiment = ratingSnap.exists()
+      ? normalizeSentiment(ratingSnap.data().sentiment)
+      : 'good';
 
     transaction.delete(userRatingRef);
-    transaction.set(aggRef, { ratingCount: newCount, sumScores: newSum });
+    if (isNonSeason) {
+      transaction.set(aggRef, sentimentIncrementPatch(sentiment, -1), { merge: true });
+    }
   });
 }
 
@@ -297,8 +367,8 @@ export async function deleteSingleRatingEntry(uid, { mediaType, mediaId, season 
 
 /**
  * Keep mediaRatings/{mediaKey}/userRatings in sync for a single user, based on
- * the flattened per-user rating entries. Also updates the aggregate (ratingCount, sumScores)
- * on the mediaRatings/{mediaKey} document.
+ * the flattened per-user rating entries. Updates sentimentCounts on mediaRatings/{mediaKey}
+ * for non-season rows only.
  */
 async function syncMediaRatingsForUser(uid, flattenedEntries) {
   if (!db) return;
@@ -314,31 +384,17 @@ async function syncMediaRatingsForUser(uid, flattenedEntries) {
     byKey.set(key, { mediaKey, segmentId, data });
   }
 
-  for (const { mediaKey, segmentId, data } of byKey.values()) {
+  for (const { mediaKey, data } of byKey.values()) {
     const aggRef = doc(db, 'mediaRatings', mediaKey);
     const userRatingRef = getDenormUserRatingRef(mediaKey, uid, data.season);
-    const numericForAgg =
-      typeof data.scoreBasic === 'number'
-        ? data.scoreBasic
-        : (typeof data.score === 'number' ? data.score : 0);
 
     await runTransaction(db, async (transaction) => {
-      const [existingSnap, aggSnap] = await Promise.all([
-        transaction.get(userRatingRef),
-        transaction.get(aggRef),
-      ]);
-      const agg = aggSnap.exists() ? aggSnap.data() : AGGREGATE_FIELDS;
-      const count = typeof agg.ratingCount === 'number' ? agg.ratingCount : 0;
-      const sumScores = typeof agg.sumScores === 'number' ? agg.sumScores : 0;
+      const existingSnap = await transaction.get(userRatingRef);
 
       const isUpdate = existingSnap.exists();
-      const prevData = isUpdate ? existingSnap.data() : {};
-      const oldScore =
-        typeof prevData.scoreBasic === 'number'
-          ? prevData.scoreBasic
-          : (typeof prevData.score === 'number' ? prevData.score : 0);
-      const newCount = isUpdate ? count : count + 1;
-      const newSum = isUpdate ? sumScores - oldScore + numericForAgg : sumScores + numericForAgg;
+      const isNonSeason = data.season == null;
+      const oldSentiment = isUpdate ? normalizeSentiment(existingSnap.data().sentiment) : null;
+      const newSentiment = normalizeSentiment(data.sentiment);
 
       transaction.set(userRatingRef, {
         uid,
@@ -352,7 +408,19 @@ async function syncMediaRatingsForUser(uid, flattenedEntries) {
         timestamp: data.timestamp ?? null,
         ...(data.season != null && { season: data.season }),
       });
-      transaction.set(aggRef, { ratingCount: newCount, sumScores: newSum }, { merge: true });
+
+      const aggPatch = {};
+      if (isNonSeason) {
+        if (!isUpdate) {
+          Object.assign(aggPatch, sentimentIncrementPatch(newSentiment, 1));
+        } else if (oldSentiment !== newSentiment) {
+          Object.assign(aggPatch, sentimentIncrementPatch(oldSentiment, -1));
+          Object.assign(aggPatch, sentimentIncrementPatch(newSentiment, 1));
+        }
+      }
+      if (Object.keys(aggPatch).length) {
+        transaction.set(aggRef, aggPatch, { merge: true });
+      }
     });
   }
 }
