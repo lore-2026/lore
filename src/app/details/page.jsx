@@ -121,17 +121,22 @@ function DetailsContent() {
   // Load media details
   useEffect(() => {
     if (!id || !mediaType) return;
-    const timer = setTimeout(async () => {
+    setLoading(true);
+    let cancelled = false;
+    (async () => {
       try {
         const data = await fetchMediaDetails(mediaType, id);
+        if (cancelled) return;
         setMedia(data);
         setCurrentTitle(mediaType === 'movie' ? data.title : data.name);
       } catch (e) {
         console.error(e);
       }
-      setLoading(false);
-    }, 2000);
-    return () => clearTimeout(timer);
+      if (!cancelled) setLoading(false);
+    })();
+    return () => {
+      cancelled = true;
+    };
   }, [id, mediaType]);
 
   // Load community sentiment (movies + whole-show TV only; season ratings excluded)
