@@ -280,11 +280,7 @@ function UserContent() {
 
 export default function UserPage() {
   return (
-    <Suspense fallback={
-      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', color: 'var(--color-text-secondary)' }}>
-        Loading...
-      </div>
-    }>
+    <Suspense fallback={null}>
       <UserContent />
     </Suspense>
   );
