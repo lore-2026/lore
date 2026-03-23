@@ -4,10 +4,11 @@ import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { signOut } from 'firebase/auth';
-import { doc, getDoc, setDoc, updateDoc, deleteDoc, writeBatch, deleteField } from 'firebase/firestore';
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { doc, getDoc, setDoc, updateDoc, deleteDoc, writeBatch } from 'firebase/firestore';
+import { ref, uploadBytes } from 'firebase/storage';
 import { auth, db, storage } from '../../lib/firebase';
-import { resizeImageForAvatar } from '../../lib/imageUtils';
+import { buildPublicFirebaseDownloadUrl } from '../../lib/firebaseStorageUrl';
+import { createAvatarVariantBlobs } from '../../lib/imageUtils';
 import { useAuth } from '../../contexts/AuthContext';
 import ProfileTabs from '../../components/ProfileTabs';
 import AvatarImage from '../../components/AvatarImage';
@@ -30,14 +31,23 @@ function initialProfileStateFromCache() {
 
 export default function ProfilePage() {
   const router = useRouter();
-  const { user, loading, photoURL, photoURLThumb, setPhotoURL, setPhotoURLThumb } = useAuth();
+  const {
+    user,
+    loading,
+    photoURL,
+    photoURLThumb,
+    photoURLSearch,
+    setPhotoURL,
+    setPhotoURLThumb,
+    setPhotoURLSearch,
+  } = useAuth();
   const [headerAvatarBroken, setHeaderAvatarBroken] = useState(false);
   const uid = user?.uid;
-  const hasHeaderAvatarUrl = Boolean(photoURLThumb || photoURL);
+  const hasHeaderAvatarUrl = Boolean(photoURLSearch || photoURLThumb || photoURL);
 
   useEffect(() => {
     setHeaderAvatarBroken(false);
-  }, [photoURLThumb, photoURL]);
+  }, [photoURLSearch, photoURLThumb, photoURL]);
   const [userData, setUserData] = useState(() => initialProfileStateFromCache().userData);
   const [profileReady, setProfileReady] = useState(() => initialProfileStateFromCache().profileReady);
   /** true until localStorage is read (useLayoutEffect, before first paint). */
@@ -122,20 +132,36 @@ export default function ProfilePage() {
     if (!file || !user) return;
     setUploading(true);
     try {
-      const storageRef = ref(storage, `avatars/${user.uid}`);
-      const blob = await resizeImageForAvatar(file);
-      await uploadBytes(storageRef, blob);
-      const url = await getDownloadURL(storageRef);
+      const bucket = process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET;
+      if (!bucket) throw new Error('Storage bucket is not configured.');
+      const { full, search, thumb } = await createAvatarVariantBlobs(file);
+      const fullPath = `avatars/${user.uid}/full`;
+      const searchPath = `avatars/${user.uid}/search`;
+      const thumbPath = `avatars/${user.uid}/thumb`;
+      await Promise.all([
+        uploadBytes(ref(storage, fullPath), full),
+        uploadBytes(ref(storage, searchPath), search),
+        uploadBytes(ref(storage, thumbPath), thumb),
+      ]);
+      const version = Date.now();
+      const url = buildPublicFirebaseDownloadUrl(bucket, fullPath, version);
+      const urlSearch = buildPublicFirebaseDownloadUrl(bucket, searchPath, version);
+      const urlThumb = buildPublicFirebaseDownloadUrl(bucket, thumbPath, version);
       await updateDoc(doc(db, 'users', user.uid), {
         photoURL: url,
-        photoURLThumb: deleteField(),
-        photoURLSearch: deleteField(),
+        photoURLThumb: urlThumb,
+        photoURLSearch: urlSearch,
       });
       setPhotoURL(url);
-      setPhotoURLThumb('');
+      setPhotoURLThumb(urlThumb);
+      setPhotoURLSearch(urlSearch);
       setUserData((prev) => {
-        const { photoURLThumb: _t, photoURLSearch: _s, ...rest } = prev || {};
-        const next = { ...rest, photoURL: url };
+        const next = {
+          ...(prev || {}),
+          photoURL: url,
+          photoURLThumb: urlThumb,
+          photoURLSearch: urlSearch,
+        };
         if (cachedProfileUid === user.uid) cachedProfileUserData = next;
         return next;
       });
@@ -236,7 +262,7 @@ export default function ProfilePage() {
                 <button className={styles.avatarBtn} onClick={handleAvatarClick} disabled={uploading} aria-label="Change profile picture">
                   {hasHeaderAvatarUrl && !headerAvatarBroken ? (
                     <AvatarImage
-                      thumbUrl={photoURLThumb}
+                      thumbUrl={photoURLSearch || photoURLThumb}
                       photoUrl={photoURL}
                       alt="Profile"
                       className={styles.avatarImg}

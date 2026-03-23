@@ -4,11 +4,11 @@ import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { FolderOpen, ExternalLink, Smile, User } from 'lucide-react';
-import { doc, getDoc, deleteDoc, deleteField, serverTimestamp, updateDoc, writeBatch } from 'firebase/firestore';
+import { doc, getDoc, deleteDoc, serverTimestamp, updateDoc, writeBatch } from 'firebase/firestore';
 import { ref, uploadBytes } from 'firebase/storage';
 import { db, storage } from '../../lib/firebase';
 import { buildPublicFirebaseDownloadUrl, stripFirebaseStorageUrlToken } from '../../lib/firebaseStorageUrl';
-import { resizeImageForAvatar } from '../../lib/imageUtils';
+import { createAvatarVariantBlobs } from '../../lib/imageUtils';
 import { useAuth } from '../../contexts/AuthContext';
 import { useImportStatus } from '../../contexts/ImportStatusContext';
 import { parseRatingsCsv, importLetterboxdRatings } from '../../lib/letterboxdImport';
@@ -158,8 +158,10 @@ export default function OnboardingPage() {
       const userSnap = await getDoc(userRef);
       const previousUsername = (userSnap.exists() ? (userSnap.data()?.username || '') : '').trim().toLowerCase();
 
-      /** Tokenless Storage URL for flat avatar, or stripped Auth/Google URL. */
+      /** Tokenless Storage URLs, or stripped Auth/Google URL when no upload happened. */
       let photoURLToSave = user.photoURL ? stripFirebaseStorageUrlToken(user.photoURL) : null;
+      let photoURLSearchToSave = null;
+      let photoURLThumbToSave = null;
 
       if (avatarFile) {
         if (!storage) {
@@ -173,11 +175,19 @@ export default function OnboardingPage() {
           setSaving(false);
           return;
         }
-        const objectPath = `avatars/${user.uid}`;
-        const storageRef = ref(storage, objectPath);
-        const blob = await resizeImageForAvatar(avatarFile);
-        await uploadBytes(storageRef, blob);
-        photoURLToSave = buildPublicFirebaseDownloadUrl(bucket, objectPath);
+        const { full, search, thumb } = await createAvatarVariantBlobs(avatarFile);
+        const fullPath = `avatars/${user.uid}/full`;
+        const searchPath = `avatars/${user.uid}/search`;
+        const thumbPath = `avatars/${user.uid}/thumb`;
+        await Promise.all([
+          uploadBytes(ref(storage, fullPath), full),
+          uploadBytes(ref(storage, searchPath), search),
+          uploadBytes(ref(storage, thumbPath), thumb),
+        ]);
+        const version = Date.now();
+        photoURLToSave = buildPublicFirebaseDownloadUrl(bucket, fullPath, version);
+        photoURLSearchToSave = buildPublicFirebaseDownloadUrl(bucket, searchPath, version);
+        photoURLThumbToSave = buildPublicFirebaseDownloadUrl(bucket, thumbPath, version);
       }
 
       if (savedUsername && savedUsername !== trimmed) {
@@ -194,14 +204,16 @@ export default function OnboardingPage() {
         const patch = { username: trimmed };
         if (avatarFile) {
           patch.photoURL = photoURLToSave;
-          patch.photoURLThumb = deleteField();
-          patch.photoURLSearch = deleteField();
+          patch.photoURLThumb = photoURLThumbToSave;
+          patch.photoURLSearch = photoURLSearchToSave;
         }
         batch.set(userRef, patch, { merge: true });
       } else {
         batch.set(userRef, {
           email: user.email || null,
           photoURL: photoURLToSave,
+          photoURLSearch: photoURLSearchToSave,
+          photoURLThumb: photoURLThumbToSave,
           username: trimmed,
           isDeveloper: false,
           createdAt: serverTimestamp(),
