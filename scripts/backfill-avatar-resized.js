@@ -6,10 +6,12 @@
  *   - search: 256×256 → `avatars/{uid}/search` → field `photoURLSearch`
  *   - thumb:  128×128 → `avatars/{uid}/thumb`  → field `photoURLThumb`
  *
- * Source image (first match wins):
- *   1) `avatars/{uid}/full` in Storage (Admin download — no HTTP)
- *   2) `avatars/{uid}` flat object in Storage
- *   3) `fetch(photoURL)` only for external URLs (e.g. Google profile) with no Storage file
+ * Source image (newest wins when both exist):
+ *   1) Compare `avatars/{uid}/full` vs `avatars/{uid}` (flat) by Storage `updated` time; use the newer.
+ *      The app currently uploads to the flat path; older `full` must not shadow a newer flat upload.
+ *   2) If only one exists, use it. When the flat file is newer (or only flat exists), also write that
+ *      buffer to `avatars/{uid}/full` so `full` stays in sync.
+ *   3) `fetch(photoURL)` only when neither Storage object exists (e.g. Google profile only)
  *
  * Storage paths sit under `avatars/{uid}/` alongside `full`.
  *
@@ -106,30 +108,65 @@ async function fetchImageBuffer(url) {
  * Prefer reading bytes from our bucket (same as your "full" asset). HTTP fetch is only
  * for users whose photo lives only on an external URL (e.g. lh3.googleusercontent.com).
  */
+function storageUpdatedMs(meta) {
+  const t = meta?.updated || meta?.timeCreated;
+  if (!t) return 0;
+  const ms = new Date(t).getTime();
+  return Number.isFinite(ms) ? ms : 0;
+}
+
+/**
+ * Pick source bytes + whether to copy flat → `avatars/{uid}/full` so `full` is not stale.
+ */
 async function getSourceImageBuffer(bucket, uid, photoURL) {
   const fullPath = `avatars/${uid}/full`;
   const flatPath = `avatars/${uid}`;
 
   const fullFile = bucket.file(fullPath);
-  const [fullExists] = await fullFile.exists();
-  if (fullExists) {
-    const [buf] = await fullFile.download();
-    return { buffer: buf, source: fullPath };
-  }
-
   const flatFile = bucket.file(flatPath);
+
+  const [fullExists] = await fullFile.exists();
   const [flatExists] = await flatFile.exists();
-  if (flatExists) {
-    const [buf] = await flatFile.download();
-    return { buffer: buf, source: flatPath };
-  }
 
-  if (photoURL) {
+  let chosenFile;
+  let chosenPath;
+  /** When true, write `buffer` to `avatars/{uid}/full` after we derive search/thumb. */
+  let writeFullCopy = false;
+  let contentTypeForFullSync = 'image/jpeg';
+
+  if (fullExists && flatExists) {
+    const [fullMeta] = await fullFile.getMetadata();
+    const [flatMeta] = await flatFile.getMetadata();
+    const fullMs = storageUpdatedMs(fullMeta);
+    const flatMs = storageUpdatedMs(flatMeta);
+    // Tie: prefer flat — matches current client uploads (`avatars/{uid}`).
+    if (flatMs >= fullMs) {
+      chosenFile = flatFile;
+      chosenPath = flatPath;
+      writeFullCopy = true;
+      if (flatMeta.contentType) contentTypeForFullSync = flatMeta.contentType;
+    } else {
+      chosenFile = fullFile;
+      chosenPath = fullPath;
+    }
+  } else if (fullExists) {
+    chosenFile = fullFile;
+    chosenPath = fullPath;
+  } else if (flatExists) {
+    chosenFile = flatFile;
+    chosenPath = flatPath;
+    const [flatMeta] = await flatFile.getMetadata();
+    if (flatMeta.contentType) contentTypeForFullSync = flatMeta.contentType;
+    writeFullCopy = true;
+  } else if (photoURL) {
     const buf = await fetchImageBuffer(photoURL);
-    return { buffer: buf, source: 'photoURL (HTTP fetch)' };
+    return { buffer: buf, source: 'photoURL (HTTP fetch)', writeFullCopy: false, contentTypeForFullSync };
+  } else {
+    return null;
   }
 
-  return null;
+  const [buf] = await chosenFile.download();
+  return { buffer: buf, source: chosenPath, writeFullCopy, contentTypeForFullSync };
 }
 
 async function resizeToSquareJpeg(input, size, jpegQuality = 85) {
@@ -161,6 +198,19 @@ async function uploadJpegWithPublicReadUrl(bucket, objectPath, jpegBuffer) {
     },
   });
   return buildPublicFirebaseDownloadUrl(bucket.name, objectPath);
+}
+
+/** Keep `avatars/{uid}/full` aligned when the app’s canonical upload is the flat `avatars/{uid}` object. */
+async function uploadFullCopyFromSource(bucket, uid, buffer, contentType) {
+  const fullPath = `avatars/${uid}/full`;
+  const file = bucket.file(fullPath);
+  await file.save(buffer, {
+    resumable: false,
+    metadata: {
+      contentType: contentType || 'image/jpeg',
+      cacheControl: 'public, max-age=31536000',
+    },
+  });
 }
 
 async function run() {
@@ -250,12 +300,17 @@ async function run() {
       const pathThumb = thumbObjectPath(uid);
 
       if (dryRun) {
+        const syncNote = resolved.writeFullCopy ? `; would sync avatars/${uid}/full` : '';
         console.log(
           `[dry-run] ${uid}: source=${resolved.source} → ${pathSearch} (${jpegSearch.length} B) + ${FIRESTORE_FIELD_SEARCH}; ` +
-            `${pathThumb} (${jpegThumb.length} B) + ${FIRESTORE_FIELD_THUMB}`
+            `${pathThumb} (${jpegThumb.length} B) + ${FIRESTORE_FIELD_THUMB}${syncNote}`
         );
         updated += 1;
         continue;
+      }
+
+      if (resolved.writeFullCopy) {
+        await uploadFullCopyFromSource(bucket, uid, raw, resolved.contentTypeForFullSync);
       }
 
       const urlSearch = await uploadJpegWithPublicReadUrl(bucket, pathSearch, jpegSearch);
@@ -264,7 +319,10 @@ async function run() {
         .collection('users')
         .doc(uid)
         .set({ [FIRESTORE_FIELD_SEARCH]: urlSearch, [FIRESTORE_FIELD_THUMB]: urlThumb }, { merge: true });
-      console.log(`[ok] ${uid}: ${FIRESTORE_FIELD_SEARCH} + ${FIRESTORE_FIELD_THUMB} set (from ${resolved.source})`);
+      const syncMsg = resolved.writeFullCopy ? `; synced avatars/${uid}/full` : '';
+      console.log(
+        `[ok] ${uid}: ${FIRESTORE_FIELD_SEARCH} + ${FIRESTORE_FIELD_THUMB} set (from ${resolved.source})${syncMsg}`
+      );
       updated += 1;
     } catch (err) {
       failed += 1;
