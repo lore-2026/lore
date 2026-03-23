@@ -1,0 +1,53 @@
+.body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.hint {
+  color: var(--color-text-secondary);
+  font-size: 14px;
+}
+
+.viewport {
+  width: 100%;
+  max-width: 320px;
+  aspect-ratio: 1;
+  margin: 0 auto;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border-default);
+  background: var(--color-surface-default);
+  position: relative;
+  overflow: hidden;
+  touch-action: none;
+  user-select: none;
+}
+
+.image {
+  position: absolute;
+  transform-origin: center center;
+}
+
+.cropCircle {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.cropCircle::before {
+  content: '';
+  position: absolute;
+  inset: 8%;
+  border-radius: 50%;
+  box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.45);
+  border: 2px solid var(--color-surface-inverse);
+}
+
+.zoomLabel {
+  color: var(--color-text-secondary);
+  font-size: 12px;
+}
+
+.range {
+  width: 100%;
+}

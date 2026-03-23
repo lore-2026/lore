@@ -12,6 +12,7 @@ import { createAvatarVariantBlobs } from '../../lib/imageUtils';
 import { useAuth } from '../../contexts/AuthContext';
 import ProfileTabs from '../../components/ProfileTabs';
 import AvatarImage from '../../components/AvatarImage';
+import AvatarCropModal from '../../components/AvatarCropModal';
 import ListUserAvatar, { listInitialsFromName } from '../../components/ListUserAvatar';
 import { Pencil, X } from 'lucide-react';
 import styles from './page.module.css';
@@ -60,6 +61,7 @@ export default function ProfilePage() {
   const [listModalType, setListModalType] = useState(null); // 'followers' | 'following'
   const [listUsers, setListUsers] = useState([]);
   const [listLoading, setListLoading] = useState(false);
+  const [pendingCropFile, setPendingCropFile] = useState(null);
   const fileInputRef = useRef(null);
 
   const USERNAME_RE = /^[a-zA-Z0-9_]{3,20}$/;
@@ -127,14 +129,13 @@ export default function ProfilePage() {
 
   const handleAvatarClick = () => fileInputRef.current?.click();
 
-  const handleFileChange = async (e) => {
-    const file = e.target.files?.[0];
-    if (!file || !user) return;
+  const uploadCroppedAvatar = async (croppedSource) => {
+    if (!croppedSource || !user) return;
     setUploading(true);
     try {
       const bucket = process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET;
       if (!bucket) throw new Error('Storage bucket is not configured.');
-      const { full, search, thumb } = await createAvatarVariantBlobs(file);
+      const { full, search, thumb } = await createAvatarVariantBlobs(croppedSource);
       const fullPath = `avatars/${user.uid}/full`;
       const searchPath = `avatars/${user.uid}/search`;
       const thumbPath = `avatars/${user.uid}/thumb`;
@@ -169,8 +170,14 @@ export default function ProfilePage() {
       console.error('Upload failed:', err);
     } finally {
       setUploading(false);
-      e.target.value = '';
+      if (fileInputRef.current) fileInputRef.current.value = '';
     }
+  };
+
+  const handleFileChange = (e) => {
+    const file = e.target.files?.[0];
+    if (!file || !user) return;
+    setPendingCropFile(file);
   };
 
   const startEditUsername = () => {
@@ -415,6 +422,19 @@ export default function ProfilePage() {
             </div>
           </div>
         </div>
+      )}
+      {pendingCropFile && (
+        <AvatarCropModal
+          file={pendingCropFile}
+          onCancel={() => {
+            setPendingCropFile(null);
+            if (fileInputRef.current) fileInputRef.current.value = '';
+          }}
+          onConfirm={(croppedBlob) => {
+            setPendingCropFile(null);
+            uploadCroppedAvatar(croppedBlob);
+          }}
+        />
       )}
     </div>
   );

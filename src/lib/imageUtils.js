@@ -40,7 +40,7 @@ export function resizeImageForAvatar(file, maxSize = 400) {
 
 /**
  * Create square avatar variants from one source file.
- * @param {File} file
+ * @param {Blob | File} file
  * @returns {Promise<{ full: Blob, search: Blob, thumb: Blob }>}
  */
 export function createAvatarVariantBlobs(file) {

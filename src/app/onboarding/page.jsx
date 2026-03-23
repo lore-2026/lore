@@ -13,6 +13,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useImportStatus } from '../../contexts/ImportStatusContext';
 import { parseRatingsCsv, importLetterboxdRatings } from '../../lib/letterboxdImport';
 import Toast from '../../components/Toast';
+import AvatarCropModal from '../../components/AvatarCropModal';
 import styles from '../login/page.module.css';
 import onboardStyles from './page.module.css';
 
@@ -53,8 +54,9 @@ export default function OnboardingPage() {
   const [importFolder, setImportFolder] = useState(null);
   const [dragOver, setDragOver] = useState(false);
   const [error, setError] = useState('');
-  const [avatarFile, setAvatarFile] = useState(null);
+  const [avatarBlob, setAvatarBlob] = useState(null);
   const [avatarPreview, setAvatarPreview] = useState(null);
+  const [pendingCropFile, setPendingCropFile] = useState(null);
   const folderInputRef = useRef(null);
   const [saving, setSaving] = useState(false);
   const [savingName, setSavingName] = useState(false);
@@ -77,6 +79,12 @@ export default function OnboardingPage() {
   useEffect(() => {
     setError('');
   }, [step]);
+
+  useEffect(() => {
+    return () => {
+      if (avatarPreview) URL.revokeObjectURL(avatarPreview);
+    };
+  }, [avatarPreview]);
 
   /** Restore step from Firestore; prefill name from Google displayName when DB has no name yet. */
   useEffect(() => {
@@ -163,7 +171,7 @@ export default function OnboardingPage() {
       let photoURLSearchToSave = null;
       let photoURLThumbToSave = null;
 
-      if (avatarFile) {
+      if (avatarBlob) {
         if (!storage) {
           setError('Storage is not configured. Check NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET.');
           setSaving(false);
@@ -175,7 +183,7 @@ export default function OnboardingPage() {
           setSaving(false);
           return;
         }
-        const { full, search, thumb } = await createAvatarVariantBlobs(avatarFile);
+        const { full, search, thumb } = await createAvatarVariantBlobs(avatarBlob);
         const fullPath = `avatars/${user.uid}/full`;
         const searchPath = `avatars/${user.uid}/search`;
         const thumbPath = `avatars/${user.uid}/thumb`;
@@ -202,7 +210,7 @@ export default function OnboardingPage() {
 
       if (userSnap.exists()) {
         const patch = { username: trimmed };
-        if (avatarFile) {
+        if (avatarBlob) {
           patch.photoURL = photoURLToSave;
           patch.photoURLThumb = photoURLThumbToSave;
           patch.photoURLSearch = photoURLSearchToSave;
@@ -517,10 +525,8 @@ export default function OnboardingPage() {
           style={{ display: 'none' }}
           onChange={(e) => {
             const file = e.target.files?.[0];
-            if (file) {
-              setAvatarFile(file);
-              setAvatarPreview(URL.createObjectURL(file));
-            }
+            if (file) setPendingCropFile(file);
+            e.target.value = '';
           }}
         />
         <button type="button" className={onboardStyles.avatarBtn} onClick={() => avatarInputRef.current?.click()}>
@@ -548,6 +554,18 @@ export default function OnboardingPage() {
           {saving ? 'Saving...' : 'Continue'}
         </button>
       </form>
+      {pendingCropFile && (
+        <AvatarCropModal
+          file={pendingCropFile}
+          onCancel={() => setPendingCropFile(null)}
+          onConfirm={(croppedBlob) => {
+            setPendingCropFile(null);
+            setAvatarBlob(croppedBlob);
+            if (avatarPreview) URL.revokeObjectURL(avatarPreview);
+            setAvatarPreview(URL.createObjectURL(croppedBlob));
+          }}
+        />
+      )}
     </div>
   );
 }
