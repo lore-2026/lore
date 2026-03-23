@@ -1,5 +1,6 @@
 import Image from 'next/image';
 import styles from './EmptyState.module.css';
+import { publicAssetPath } from '../lib/publicPath';
 
 /**
  * Generic empty state component.
@@ -15,7 +16,7 @@ export default function EmptyState({ title, subtitle, action, secondaryAction })
     <div className={styles.container}>
       <div className={styles.iconWrap}>
         <Image
-          src="/images/Rabbitjumping.svg"
+          src={publicAssetPath('/images/Rabbitjumping.svg')}
           alt=""
           width={160}
           height={160}
