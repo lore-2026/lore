@@ -47,8 +47,82 @@ export function deriveDisplayScoresForGroup(entries, sentiment) {
   const sorted = [...entries].sort(sortRatingsByRank);
   return sorted.map((entry, idx) => ({
     ...entry,
-    displayScore: scoreForPosition(sentiment, idx, sorted.length),
+    displayScore:
+      typeof entry.scoreBasic === 'number'
+        ? clampScore(entry.scoreBasic)
+        : scoreForPosition(sentiment, idx, sorted.length),
   }));
+}
+
+function tvEntryKey(entry) {
+  return `${entry.mediaId}|${entry.season == null ? 'show' : entry.season}`;
+}
+
+function movieEntryKey(entry) {
+  return String(entry.mediaId);
+}
+
+/**
+ * Recompute scoreBasic for every rating: uniform 0–10 within each cohort (lexorank order),
+ * using the same ranges as display (not-good / okay / good / amazing).
+ * Movie cohorts: all entries in a sentiment bucket.
+ * TV whole-show cohorts: entries with season == null in that sentiment.
+ * TV season cohorts: per (mediaId, sentiment) among season rows.
+ */
+export function enrichRatingsWithScoreBasic(ratings) {
+  const src = ratings || { movie: {}, tv: {} };
+  const result = { movie: {}, tv: {} };
+
+  for (const sentiment of Object.keys(src.movie || {})) {
+    const arr = src.movie[sentiment] || [];
+    const sorted = [...arr].sort(sortRatingsByRank);
+    const n = sorted.length;
+    const basics = new Map();
+    sorted.forEach((e, i) => {
+      basics.set(movieEntryKey(e), scoreForPosition(sentiment, i, n));
+    });
+    result.movie[sentiment] = arr.map((e) => ({
+      ...e,
+      scoreBasic: basics.get(movieEntryKey(e)),
+    }));
+  }
+
+  for (const sentiment of Object.keys(src.tv || {})) {
+    const arr = src.tv[sentiment] || [];
+    const whole = arr.filter((e) => e.season == null);
+    const seasons = arr.filter((e) => e.season != null);
+
+    const sortedWhole = [...whole].sort(sortRatingsByRank);
+    const nWhole = sortedWhole.length;
+    const wholeBasics = new Map();
+    sortedWhole.forEach((e, i) => {
+      wholeBasics.set(tvEntryKey(e), scoreForPosition(sentiment, i, nWhole));
+    });
+
+    const byShow = new Map();
+    for (const e of seasons) {
+      const k = String(e.mediaId);
+      if (!byShow.has(k)) byShow.set(k, []);
+      byShow.get(k).push(e);
+    }
+    const seasonBasics = new Map();
+    for (const group of byShow.values()) {
+      const sortedS = [...group].sort(sortRatingsByRank);
+      const nS = sortedS.length;
+      sortedS.forEach((e, i) => {
+        seasonBasics.set(tvEntryKey(e), scoreForPosition(sentiment, i, nS));
+      });
+    }
+
+    result.tv[sentiment] = arr.map((e) => ({
+      ...e,
+      scoreBasic: e.season == null
+        ? wholeBasics.get(tvEntryKey(e))
+        : seasonBasics.get(tvEntryKey(e)),
+    }));
+  }
+
+  return result;
 }
 
 /**
@@ -121,9 +195,13 @@ export function deriveDisplayScoresForTv(ratingsBySentiment) {
     const correction = anchor - rawAvg;
 
     raw.forEach((entry) => {
+      const legacyDisplay = clampScore(entry.__rawScore + correction);
       derivedSeasons.push({
         ...entry,
-        displayScore: clampScore(entry.__rawScore + correction),
+        displayScore:
+          typeof entry.scoreBasic === 'number'
+            ? clampScore(entry.scoreBasic)
+            : legacyDisplay,
       });
     });
   }

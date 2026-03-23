@@ -4,14 +4,14 @@ import { useEffect, useState, useCallback, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
-import { doc, getDoc, setDoc, updateDoc, collection, getDocs, writeBatch, increment, addDoc, serverTimestamp } from 'firebase/firestore';
+import { doc, getDoc, updateDoc, collection, getDocs, increment, addDoc, serverTimestamp } from 'firebase/firestore';
 import { auth, db } from '../../lib/firebase';
 import { useAuth } from '../../contexts/AuthContext';
-import { deleteSingleRatingEntry, getMediaAverageRating, getRatingDocId } from '../../lib/ratingsFirestore';
+import { getMediaAverageRating, getRatingDocId, saveRatings } from '../../lib/ratingsFirestore';
 import { useRatings } from '../../contexts/RatingsContext';
 import { fetchMediaDetails, getPosterUrl } from '../../lib/tmdb';
 import { createInitialRankKey, keyBetween, rebalanceRankKeys } from '../../lib/lexorank';
-import { deriveDisplayScoresForGroup, deriveDisplayScoresForTv, scoreForPosition, sortRatingsByRank } from '../../lib/ratingsRanking';
+import { deriveDisplayScoresForGroup, deriveDisplayScoresForTv, enrichRatingsWithScoreBasic, scoreForPosition, sortRatingsByRank } from '../../lib/ratingsRanking';
 import { publicAssetPath } from '../../lib/publicPath';
 import AddToListModal from '../../components/AddToListModal';
 import DiscussionSection from '../../components/DiscussionSection';
@@ -59,38 +59,12 @@ function DetailsContent() {
   const { ratings: userRatings, setRatings: setUserRatings, refreshRatings, loading: ratingsLoading } = useRatings();
   const [discussionUsername, setDiscussionUsername] = useState(null);
 
-  const upsertMediaRatingEntry = useCallback(async (uid, entry, { isNew = false } = {}) => {
-    const mediaKey = entry.mediaType === 'tv' ? `tv_${entry.mediaId}` : `movie_${entry.mediaId}`;
-    const aggRef = doc(db, 'mediaRatings', mediaKey);
-    const userRef = doc(db, 'mediaRatings', mediaKey, 'userRatings', uid);
-    const ratingRef = entry.mediaType === 'tv' && entry.season != null
-      ? doc(userRef, 'seasons', String(entry.season))
-      : userRef;
-
-    await setDoc(ratingRef, {
-      uid,
-      mediaType: entry.mediaType === 'tv' ? 'tv' : 'movie',
-      mediaId: entry.mediaId,
-      sentiment: entry.sentiment,
-      mediaName: entry.mediaName ?? null,
-      note: entry.note ?? null,
-      score: entry.score ?? null,
-      timestamp: entry.timestamp ?? null,
-      ...(entry.season != null && { season: entry.season }),
-    }, { merge: true });
-
-    if (isNew) {
-      await setDoc(aggRef, { ratingCount: increment(1) }, { merge: true });
-    }
-  }, []);
-
-  const getUserRatingRef = useCallback((uid, mediaTypeValue, mediaIdValue, seasonValue) => {
-    if (mediaTypeValue === 'movie') {
-      return doc(db, 'users', uid, 'ratings', `movie_${mediaIdValue}`);
-    }
-    const tvParent = doc(db, 'users', uid, 'ratings', `tv_${mediaIdValue}`);
-    return seasonValue == null ? tvParent : doc(tvParent, 'seasons', String(seasonValue));
-  }, []);
+  const denormNumericScore = (d) => {
+    if (!d) return null;
+    if (typeof d.scoreBasic === 'number') return d.scoreBasic;
+    if (typeof d.score === 'number') return d.score;
+    return null;
+  };
 
   const isComparableCandidate = useCallback((item) => {
     if (mediaType !== 'tv') return true;
@@ -155,6 +129,20 @@ function DetailsContent() {
     getMediaAverageRating(mediaKey).then(setOverallAverage).catch(() => setOverallAverage(null));
   }, [id, mediaType]);
 
+  // O(1) read for this movie’s rating doc (scoreBasic + sentiment) while full cache may still load.
+  useEffect(() => {
+    if (!authUser || !id || mediaType !== 'movie') return;
+    getDoc(doc(db, 'users', authUser.uid, 'ratings', `movie_${id}`)).then((snap) => {
+      if (!snap.exists()) return;
+      const d = snap.data();
+      if (typeof d.scoreBasic === 'number') {
+        setFinalScore(d.scoreBasic);
+        setExistingSentiment(d.sentiment ?? null);
+        setRatingPhase('done');
+      }
+    }).catch(() => {});
+  }, [authUser, id, mediaType]);
+
   // Apply global ratings cache to local details state.
   useEffect(() => {
     if (!authUser || !id || !mediaType || !userRatings) return;
@@ -208,13 +196,13 @@ function DetailsContent() {
                     const seasonData = seasonDoc.data();
                     seasons.push({
                       season: seasonData.season ?? Number(seasonDoc.id),
-                      score: seasonData.score,
+                      score: denormNumericScore(seasonData),
                       note: seasonData.note ?? null,
                     });
                   });
 
                   const wholeShow = wholeSnap.exists() ? {
-                    score: wholeSnap.data().score,
+                    score: denormNumericScore(wholeSnap.data()),
                     note: wholeSnap.data().note ?? null,
                   } : null;
 
@@ -241,7 +229,7 @@ function DetailsContent() {
               byFriend.set(uid, {
                 uid,
                 wholeShow: {
-                  score: data.score,
+                  score: denormNumericScore(data),
                   note: data.note ?? null,
                 },
                 seasons: [],
@@ -406,8 +394,6 @@ function DetailsContent() {
     if (group.length === 0) {
       const rankKey = createInitialRankKey();
       const max = scoreForPosition(selectedSentiment, 0, 1);
-      const ratingDocId = getRatingDocId(mediaType, id, selectedSeason);
-      const ratingRef = getUserRatingRef(user.uid, mediaType, id, selectedSeason);
       const existedInRatings = Object.keys(ratings[mediaType] || {}).some((sentiment) =>
         (ratings[mediaType][sentiment] || []).some(matchesCurrent)
       );
@@ -421,19 +407,20 @@ function DetailsContent() {
         timestamp: new Date().toISOString(),
         ...(selectedSeason != null && { season: selectedSeason }),
       };
-      await setDoc(ratingRef, newRating, { merge: true });
-      await upsertMediaRatingEntry(user.uid, newRating, { isNew: !existedInRatings && !isReranking });
-      if (!existedInRatings && !isReranking) {
-        await incrementRatingCount(user.uid);
-        autoPostDiscussionNote(max);
-      }
 
       for (const sentiment of Object.keys(ratings[mediaType])) {
         ratings[mediaType][sentiment] = (ratings[mediaType][sentiment] || []).filter(item => !matchesCurrent(item));
       }
       ratings[mediaType][selectedSentiment] = [...untouchedInSentiment, newRating];
-      setUserRatings(ratings);
-      refreshShowRatings(ratings);
+      const enriched = enrichRatingsWithScoreBasic(ratings);
+      setUserRatings(enriched);
+      refreshShowRatings(enriched);
+
+      await saveRatings(user.uid, enriched);
+      if (!existedInRatings && !isReranking) {
+        await incrementRatingCount(user.uid);
+        autoPostDiscussionNote(max);
+      }
       if (mediaType === 'tv') {
         setSelectedSentiment(null);
         setSelectedSeason(null);
@@ -500,7 +487,6 @@ function DetailsContent() {
       (ratings[mediaType][sentiment] || []).some(matchesCurrent)
     );
     const ratingDocId = getRatingDocId(mediaType, id, selectedSeason);
-    const ratingRef = getUserRatingRef(user.uid, mediaType, id, selectedSeason);
 
     const group = [...(ratings[mediaType][selectedSentiment] || [])]
       .filter(item => !matchesCurrent(item) && isComparableCandidate(item))
@@ -546,8 +532,9 @@ function DetailsContent() {
     const updatedGroup = rebalancedEntries || [...group];
     if (!rebalancedEntries) updatedGroup.splice(position, 0, optimistic);
     ratings[mediaType][selectedSentiment] = [...untouchedInSentiment, ...updatedGroup];
-    setUserRatings(ratings);
-    refreshShowRatings(ratings);
+    const enriched = enrichRatingsWithScoreBasic(ratings);
+    setUserRatings(enriched);
+    refreshShowRatings(enriched);
 
     if (!existedInRatings && !isReranking) autoPostDiscussionNote(scoreAtPosition);
 
@@ -569,31 +556,7 @@ function DetailsContent() {
     setInsertionState(null);
 
     const persistWrite = async () => {
-      if (rebalancedEntries) {
-        const batch = writeBatch(db);
-        rebalancedEntries.forEach((entry) => {
-          const entryId = entry.id || getRatingDocId(mediaType, entry.mediaId, entry.season);
-          const ref = getUserRatingRef(user.uid, entry.mediaType || mediaType, entry.mediaId, entry.season);
-          if (entryId === ratingDocId) {
-            batch.set(ref, { ...newEntry, score: entry.score }, { merge: true });
-          } else {
-            batch.update(ref, { score: entry.score });
-          }
-        });
-        await batch.commit();
-        await Promise.all(
-          rebalancedEntries.map((entry) => upsertMediaRatingEntry(user.uid, entry, { isNew: false }))
-        );
-      } else {
-        const persisted = { ...newEntry, score: nextScore };
-        await setDoc(ratingRef, persisted, { merge: true });
-        await upsertMediaRatingEntry(
-          user.uid,
-          persisted,
-          { isNew: !existedInRatings && !isReranking }
-        );
-      }
-
+      await saveRatings(user.uid, enriched);
       if (!existedInRatings && !isReranking) await incrementRatingCount(user.uid);
     };
 
@@ -719,9 +682,9 @@ function DetailsContent() {
       }
 
       if (removed) {
-        // Optimistic UI update first, persist in background.
-        setUserRatings(ratings);
-        refreshShowRatings(ratings);
+        const enriched = enrichRatingsWithScoreBasic(ratings);
+        setUserRatings(enriched);
+        refreshShowRatings(enriched);
         setFinalScore(null);
         setExistingSentiment(null);
         setRatingPhase('initial');
@@ -732,11 +695,7 @@ function DetailsContent() {
 
         (async () => {
           try {
-            await deleteSingleRatingEntry(user.uid, {
-              mediaType,
-              mediaId: id,
-              season: targetSeason,
-            });
+            await saveRatings(user.uid, enriched);
             await updateDoc(doc(db, 'users', user.uid), { ratingCount: increment(-1) });
 
             if (mediaType === 'movie') {

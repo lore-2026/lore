@@ -14,6 +14,7 @@ import {
   runTransaction,
 } from 'firebase/firestore';
 import { db } from './firebase';
+import { enrichRatingsWithScoreBasic } from './ratingsRanking';
 
 const BATCH_SIZE = 500;
 const AGGREGATE_FIELDS = { ratingCount: 0, sumScores: 0 };
@@ -63,7 +64,7 @@ export async function getMediaAverageRating(mediaKey) {
 
 /**
  * Fetch all rating docs for a user and return the nested shape:
- * { movie: { [sentiment]: [{ id, mediaId, mediaType?, mediaName?, note, score, scoreV2?, timestamp, season? }] }, tv: { ... } }
+ * { movie: { [sentiment]: [{ id, mediaId, mediaType?, mediaName?, note, score, scoreV2?, scoreBasic?, timestamp, season? }] }, tv: { ... } }
  */
 export async function getRatings(uid) {
   if (!db) return { movie: {}, tv: {} };
@@ -89,6 +90,7 @@ export async function getRatings(uid) {
         note: data.note ?? null,
         score: data.score,
         scoreV2: data.scoreV2 ?? null,
+        scoreBasic: typeof data.scoreBasic === 'number' ? data.scoreBasic : null,
         timestamp: data.timestamp ?? null,
         sentiment: data.sentiment || 'good',
       });
@@ -103,6 +105,7 @@ export async function getRatings(uid) {
       note: data.note ?? null,
       score: data.score,
       scoreV2: data.scoreV2 ?? null,
+      scoreBasic: typeof data.scoreBasic === 'number' ? data.scoreBasic : null,
       timestamp: data.timestamp ?? null,
       sentiment: data.sentiment || 'good',
     });
@@ -119,6 +122,7 @@ export async function getRatings(uid) {
         note: seasonData.note ?? null,
         score: seasonData.score,
         scoreV2: seasonData.scoreV2 ?? null,
+        scoreBasic: typeof seasonData.scoreBasic === 'number' ? seasonData.scoreBasic : null,
         timestamp: seasonData.timestamp ?? null,
         season,
         sentiment: seasonData.sentiment || 'good',
@@ -150,6 +154,7 @@ function flattenRatingsToEntries(ratings) {
             note: entry.note ?? null,
             score: entry.score,
             scoreV2: entry.scoreV2 ?? null,
+            scoreBasic: typeof entry.scoreBasic === 'number' ? entry.scoreBasic : null,
             timestamp: entry.timestamp ?? null,
             ...(entry.season != null && { season: entry.season }),
           },
@@ -166,7 +171,8 @@ function flattenRatingsToEntries(ratings) {
  */
 export async function saveRatings(uid, ratings) {
   if (!db) return;
-  const entries = flattenRatingsToEntries(ratings).map(({ data }) => data);
+  const enriched = enrichRatingsWithScoreBasic(ratings);
+  const entries = flattenRatingsToEntries(enriched).map(({ data }) => data);
   const prev = flattenRatingsToEntries(await getRatings(uid)).map(({ data }) => data);
   const desired = new Map(entries.map((e) => [entryKey(e.mediaType, e.mediaId, e.season), e]));
   const existing = new Map(prev.map((e) => [entryKey(e.mediaType, e.mediaId, e.season), e]));
@@ -182,6 +188,7 @@ export async function saveRatings(uid, ratings) {
       note: data.note ?? null,
       score: data.score ?? null,
       scoreV2: data.scoreV2 ?? null,
+      scoreBasic: typeof data.scoreBasic === 'number' ? data.scoreBasic : null,
       timestamp: data.timestamp ?? null,
       ...(data.season != null && { season: data.season }),
     }, { merge: true });
@@ -256,9 +263,11 @@ export async function deleteMediaRatingEntry(mediaKey, ratingDocId) {
       transaction.get(userRatingRef),
       transaction.get(aggRef),
     ]);
-    const score = ratingSnap.exists() && typeof ratingSnap.data().score === 'number'
-      ? ratingSnap.data().score
-      : 0;
+    const snapData = ratingSnap.exists() ? ratingSnap.data() : {};
+    const score =
+      typeof snapData.scoreBasic === 'number'
+        ? snapData.scoreBasic
+        : (typeof snapData.score === 'number' ? snapData.score : 0);
     const agg = aggSnap.exists() ? aggSnap.data() : AGGREGATE_FIELDS;
     const count = (typeof agg.ratingCount === 'number' ? agg.ratingCount : 0) - 1;
     const sumScores = (typeof agg.sumScores === 'number' ? agg.sumScores : 0) - score;
@@ -302,16 +311,16 @@ async function syncMediaRatingsForUser(uid, flattenedEntries) {
     const segmentId = data.season != null ? `s${data.season}` : 'show';
     const key = `${mediaKey}|${segmentId}`;
 
-    const existing = byKey.get(key);
-    if (!existing || (data.score ?? 0) > (existing.score ?? 0)) {
-      byKey.set(key, { mediaKey, segmentId, data });
-    }
+    byKey.set(key, { mediaKey, segmentId, data });
   }
 
   for (const { mediaKey, segmentId, data } of byKey.values()) {
     const aggRef = doc(db, 'mediaRatings', mediaKey);
     const userRatingRef = getDenormUserRatingRef(mediaKey, uid, data.season);
-    const score = typeof data.score === 'number' ? data.score : 0;
+    const numericForAgg =
+      typeof data.scoreBasic === 'number'
+        ? data.scoreBasic
+        : (typeof data.score === 'number' ? data.score : 0);
 
     await runTransaction(db, async (transaction) => {
       const [existingSnap, aggSnap] = await Promise.all([
@@ -323,11 +332,13 @@ async function syncMediaRatingsForUser(uid, flattenedEntries) {
       const sumScores = typeof agg.sumScores === 'number' ? agg.sumScores : 0;
 
       const isUpdate = existingSnap.exists();
-      const oldScore = isUpdate && typeof existingSnap.data().score === 'number'
-        ? existingSnap.data().score
-        : 0;
+      const prevData = isUpdate ? existingSnap.data() : {};
+      const oldScore =
+        typeof prevData.scoreBasic === 'number'
+          ? prevData.scoreBasic
+          : (typeof prevData.score === 'number' ? prevData.score : 0);
       const newCount = isUpdate ? count : count + 1;
-      const newSum = isUpdate ? sumScores - oldScore + score : sumScores + score;
+      const newSum = isUpdate ? sumScores - oldScore + numericForAgg : sumScores + numericForAgg;
 
       transaction.set(userRatingRef, {
         uid,
@@ -336,6 +347,7 @@ async function syncMediaRatingsForUser(uid, flattenedEntries) {
         sentiment: data.sentiment,
         mediaName: data.mediaName ?? null,
         score: data.score,
+        scoreBasic: typeof data.scoreBasic === 'number' ? data.scoreBasic : null,
         note: data.note ?? null,
         timestamp: data.timestamp ?? null,
         ...(data.season != null && { season: data.season }),

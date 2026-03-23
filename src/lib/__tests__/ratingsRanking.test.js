@@ -3,6 +3,7 @@ const {
   scoreForPosition,
   deriveDisplayScoresForGroup,
   deriveDisplayScoresForTv,
+  enrichRatingsWithScoreBasic,
 } = require('../ratingsRanking');
 
 function byId(arr) {
@@ -101,6 +102,14 @@ describe('ratingsRanking', () => {
       expect(scoreForPosition('unknown-sentiment', 2, 3)).toBe(1);
     });
 
+    test('deriveDisplayScoresForGroup prefers stored scoreBasic when present', () => {
+      const derived = deriveDisplayScoresForGroup(
+        [{ id: 'a', mediaId: 1, score: 'zz', scoreBasic: 7.2 }],
+        'good',
+      );
+      expect(derived[0].displayScore).toBe(7.2);
+    });
+
     test('display scores are monotonic for lexorank-ordered cohorts', () => {
       const entries = [
         { id: 'r1', score: 'A00000000000' },
@@ -114,6 +123,43 @@ describe('ratingsRanking', () => {
       for (let i = 1; i < derived.length; i += 1) {
         expect(derived[i - 1].displayScore).toBeGreaterThan(derived[i].displayScore);
       }
+    });
+  });
+
+  describe('enrichRatingsWithScoreBasic', () => {
+    test('assigns uniform movie scores per sentiment cohort', () => {
+      const ratings = {
+        movie: {
+          good: [
+            { mediaId: 1, score: 'B00000000000' },
+            { mediaId: 2, score: 'A00000000000' },
+          ],
+        },
+        tv: {},
+      };
+      const out = enrichRatingsWithScoreBasic(ratings);
+      expect(out.movie.good[1].scoreBasic).toBe(8);
+      expect(out.movie.good[0].scoreBasic).toBe(7);
+    });
+
+    test('TV whole-show and season cohorts are independent', () => {
+      const ratings = {
+        movie: {},
+        tv: {
+          amazing: [
+            { mediaId: 10, mediaType: 'tv', score: 'A00000000000' },
+            { mediaId: 11, mediaType: 'tv', season: 1, score: 'B00000000000' },
+            { mediaId: 11, mediaType: 'tv', season: 2, score: 'A00000000000' },
+          ],
+        },
+      };
+      const out = enrichRatingsWithScoreBasic(ratings);
+      const whole = out.tv.amazing.find((e) => e.season == null);
+      const s1 = out.tv.amazing.find((e) => e.season === 1);
+      const s2 = out.tv.amazing.find((e) => e.season === 2);
+      expect(whole.scoreBasic).toBe(10);
+      expect(s1.scoreBasic).toBe(9);
+      expect(s2.scoreBasic).toBe(10);
     });
   });
 

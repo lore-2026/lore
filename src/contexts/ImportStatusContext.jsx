@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 
 const STORAGE_KEY = 'lore:letterboxdImportStatus:v1';
 
@@ -29,18 +29,27 @@ const initialState = {
 };
 
 export function ImportStatusProvider({ children }) {
-  const [status, setStatus] = useState(() => {
-    if (typeof window === 'undefined') return initialState;
-    const raw = window.localStorage.getItem(STORAGE_KEY);
-    const parsed = raw ? safeParse(raw) : null;
-    if (parsed && typeof parsed === 'object') {
-      return { ...initialState, ...parsed };
-    }
-    return initialState;
-  });
+  // Must match server first paint: never read localStorage in useState (avoids hydration mismatch).
+  const [status, setStatus] = useState(initialState);
+  const skipFirstPersist = useRef(true);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
+    const raw = window.localStorage.getItem(STORAGE_KEY);
+    const parsed = raw ? safeParse(raw) : null;
+    if (parsed && typeof parsed === 'object') {
+      const next = { ...initialState, ...parsed };
+      // Defer so this isn’t synchronous setState inside the effect (react-hooks/set-state-in-effect).
+      queueMicrotask(() => setStatus(next));
+    }
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    if (skipFirstPersist.current) {
+      skipFirstPersist.current = false;
+      return;
+    }
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify(status));
   }, [status]);
 
