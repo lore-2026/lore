@@ -171,9 +171,7 @@ function ListContent() {
         )}
 
         <div className={styles.resultsContainer}>
-          {items === null ? (
-            <p className={styles.emptyState}>Loading...</p>
-          ) : items.length === 0 ? (
+          {items === null ? null : items.length === 0 ? (
             <p className={styles.emptyState}>No titles in this list yet.</p>
           ) : (
             items.map((item) => (

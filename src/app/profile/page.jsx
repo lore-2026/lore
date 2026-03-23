@@ -3,13 +3,16 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import Image from 'next/image';
 import { signOut } from 'firebase/auth';
 import { doc, getDoc, setDoc, updateDoc, deleteDoc, writeBatch } from 'firebase/firestore';
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { ref, uploadBytes } from 'firebase/storage';
 import { auth, db, storage } from '../../lib/firebase';
+import { buildPublicFirebaseDownloadUrl } from '../../lib/firebaseStorageUrl';
+import { createAvatarVariantBlobs } from '../../lib/imageUtils';
 import { useAuth } from '../../contexts/AuthContext';
 import ProfileTabs from '../../components/ProfileTabs';
+import AvatarImage from '../../components/AvatarImage';
+import ListUserAvatar, { listInitialsFromName } from '../../components/ListUserAvatar';
 import { Pencil, X } from 'lucide-react';
 import styles from './page.module.css';
 import inputStyles from '../login/page.module.css';
@@ -28,8 +31,23 @@ function initialProfileStateFromCache() {
 
 export default function ProfilePage() {
   const router = useRouter();
-  const { user, loading, photoURL, setPhotoURL } = useAuth();
+  const {
+    user,
+    loading,
+    photoURL,
+    photoURLThumb,
+    photoURLSearch,
+    setPhotoURL,
+    setPhotoURLThumb,
+    setPhotoURLSearch,
+  } = useAuth();
+  const [headerAvatarBroken, setHeaderAvatarBroken] = useState(false);
   const uid = user?.uid;
+  const hasHeaderAvatarUrl = Boolean(photoURLSearch || photoURLThumb || photoURL);
+
+  useEffect(() => {
+    setHeaderAvatarBroken(false);
+  }, [photoURLSearch, photoURLThumb, photoURL]);
   const [userData, setUserData] = useState(() => initialProfileStateFromCache().userData);
   const [profileReady, setProfileReady] = useState(() => initialProfileStateFromCache().profileReady);
   /** true until localStorage is read (useLayoutEffect, before first paint). */
@@ -114,13 +132,36 @@ export default function ProfilePage() {
     if (!file || !user) return;
     setUploading(true);
     try {
-      const storageRef = ref(storage, `avatars/${user.uid}`);
-      await uploadBytes(storageRef, file);
-      const url = await getDownloadURL(storageRef);
-      await updateDoc(doc(db, 'users', user.uid), { photoURL: url });
+      const bucket = process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET;
+      if (!bucket) throw new Error('Storage bucket is not configured.');
+      const { full, search, thumb } = await createAvatarVariantBlobs(file);
+      const fullPath = `avatars/${user.uid}/full`;
+      const searchPath = `avatars/${user.uid}/search`;
+      const thumbPath = `avatars/${user.uid}/thumb`;
+      await Promise.all([
+        uploadBytes(ref(storage, fullPath), full),
+        uploadBytes(ref(storage, searchPath), search),
+        uploadBytes(ref(storage, thumbPath), thumb),
+      ]);
+      const version = Date.now();
+      const url = buildPublicFirebaseDownloadUrl(bucket, fullPath, version);
+      const urlSearch = buildPublicFirebaseDownloadUrl(bucket, searchPath, version);
+      const urlThumb = buildPublicFirebaseDownloadUrl(bucket, thumbPath, version);
+      await updateDoc(doc(db, 'users', user.uid), {
+        photoURL: url,
+        photoURLThumb: urlThumb,
+        photoURLSearch: urlSearch,
+      });
       setPhotoURL(url);
+      setPhotoURLThumb(urlThumb);
+      setPhotoURLSearch(urlSearch);
       setUserData((prev) => {
-        const next = { ...prev, photoURL: url };
+        const next = {
+          ...(prev || {}),
+          photoURL: url,
+          photoURLThumb: urlThumb,
+          photoURLSearch: urlSearch,
+        };
         if (cachedProfileUid === user.uid) cachedProfileUserData = next;
         return next;
       });
@@ -219,10 +260,21 @@ export default function ProfilePage() {
             <div className={styles.userInfoRow}>
               <div className={styles.identifierSection}>
                 <button className={styles.avatarBtn} onClick={handleAvatarClick} disabled={uploading} aria-label="Change profile picture">
-                  {photoURL
-                    ? <Image src={photoURL} alt="Profile" className={styles.avatarImg} width={96} height={96} />
-                    : <span className={styles.avatarInitials}>{fullName ? `${fullName.split(' ')[0][0]}${fullName.split(' ')[1]?.[0] || ''}`.toUpperCase() : '?'}</span>
-                  }
+                  {hasHeaderAvatarUrl && !headerAvatarBroken ? (
+                    <AvatarImage
+                      thumbUrl={photoURLSearch || photoURLThumb}
+                      photoUrl={photoURL}
+                      alt="Profile"
+                      className={styles.avatarImg}
+                      width={96}
+                      height={96}
+                      onExhausted={() => setHeaderAvatarBroken(true)}
+                    />
+                  ) : (
+                    <span className={styles.avatarInitials}>
+                      {fullName ? listInitialsFromName(fullName) : '?'}
+                    </span>
+                  )}
                   <span className={styles.avatarOverlay}>{uploading ? '...' : <i className="fas fa-camera" aria-hidden="true" />}</span>
                 </button>
                 <input ref={fileInputRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={handleFileChange} />
@@ -342,10 +394,13 @@ export default function ProfilePage() {
                       <li key={u.uid}>
                         <Link href={`/user?uid=${u.uid}`} className={styles.modalListRow} onClick={closeListModal}>
                           <div className={styles.modalListAvatar}>
-                            {u.photoURL
-                              ? <Image src={u.photoURL} alt="" width={40} height={40} className={styles.modalListAvatarImg} />
-                              : <span className={styles.modalListInitials}>{name ? `${name.split(' ')[0][0]}${name.split(' ')[1]?.[0] || ''}`.toUpperCase() : '?'}</span>
-                            }
+                            <ListUserAvatar
+                              thumbUrl={u.photoURLThumb}
+                              photoUrl={u.photoURL}
+                              name={name}
+                              classNameImg={styles.modalListAvatarImg}
+                              classNameInitials={styles.modalListInitials}
+                            />
                           </div>
                           <div className={styles.modalListInfo}>
                             <span className={styles.modalListName}>{name}</span>

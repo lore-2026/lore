@@ -399,13 +399,13 @@ export default function ProfileTabs({ userId }) {
 
   const renderContent = () => {
     if (activeTab === 'movies') {
-      if (movies === null) return <p className={styles.emptyState}>Loading...</p>;
+      if (movies === null) return null;
       if (movies.length === 0) return <EmptyState title="Nothing to show here yet." subtitle="Rate movies from the Search page." action={{ label: 'Search for movies', onClick: () => router.push('/explore') }} secondaryAction={{ label: 'Or, Import from Letterboxd', onClick: () => router.push('/settings') }} />;
       return movies.map((item) => renderRatedRow(item, item.mediaType || 'movie'));
     }
 
     if (activeTab === 'shows') {
-      if (shows === null) return <p className={styles.emptyState}>Loading...</p>;
+      if (shows === null) return null;
       if (shows.length === 0) return <EmptyState title="Nothing to show here yet." subtitle="Rate shows from the Search page." action={{ label: 'Search for shows', onClick: () => router.push('/explore') }} />;
 
       const groupMap = {};
@@ -420,7 +420,7 @@ export default function ProfileTabs({ userId }) {
     }
 
     if (activeTab === 'watchlist') {
-      if (watchlist === null) return <p className={styles.emptyState}>Loading...</p>;
+      if (watchlist === null) return null;
       if (watchlist.length === 0) return <EmptyState title="Your watchlist is empty." subtitle="Add anything you want to watch from the Search page." action={{ label: 'Search for something to watch', onClick: () => router.push('/explore') }} />;
       const filtered = watchlistFilter === 'all' ? watchlist : watchlist.filter((item) => item.mediaType === watchlistFilter);
       return (
@@ -445,7 +445,7 @@ export default function ProfileTabs({ userId }) {
     }
 
     if (activeTab === 'lists') {
-      if (lists === null) return <p className={styles.emptyState}>Loading...</p>;
+      if (lists === null) return null;
       if (lists.length === 0) return (
         <EmptyState
           title="No lists yet."

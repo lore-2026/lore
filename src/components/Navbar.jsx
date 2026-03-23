@@ -2,16 +2,38 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { ChevronRight } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
+import AvatarImage from './AvatarImage';
 import { publicAssetPath } from '../lib/publicPath';
 import styles from './Navbar.module.css';
 
+/** Isolated state + remount via `key` when URLs change (avoids setState in useEffect). */
+function NavbarProfileAvatar({ thumbUrl, photoUrl, initialsText, classNameImg }) {
+  const [avatarBroken, setAvatarBroken] = useState(false);
+  const hasAvatarUrl = Boolean(thumbUrl || photoUrl);
+  return hasAvatarUrl && !avatarBroken ? (
+    <AvatarImage
+      thumbUrl={thumbUrl}
+      photoUrl={photoUrl}
+      thumbOnly
+      alt="Profile"
+      className={classNameImg}
+      width={36}
+      height={36}
+      priority
+      onExhausted={() => setAvatarBroken(true)}
+    />
+  ) : (
+    initialsText
+  );
+}
+
 export default function Navbar() {
   const router = useRouter();
-  const { user, initials, photoURL, signOut, loading } = useAuth();
+  const { user, initials, photoURL, photoURLThumb, signOut, loading } = useAuth();
+
   const [menuOpen, setMenuOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
@@ -124,10 +146,13 @@ export default function Navbar() {
                   aria-label="User menu"
                   onClick={() => router.push('/profile')}
                 >
-                  {photoURL
-                    ? <Image src={photoURL} alt="Profile" className={styles.profileCircleImg} width={36} height={36} />
-                    : initials
-                  }
+                  <NavbarProfileAvatar
+                    key={`${photoURLThumb ?? ''}|${photoURL ?? ''}`}
+                    thumbUrl={photoURLThumb}
+                    photoUrl={photoURL}
+                    initialsText={initials}
+                    classNameImg={styles.profileCircleImg}
+                  />
                 </button>
                 {userMenuOpen && (
                   <div className={styles.userDropdown} role="menu">

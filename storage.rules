@@ -1,0 +1,20 @@
+rules_version = '2';
+// Deploy: Firebase Console → Storage → Rules, or: firebase deploy --only storage
+//
+// Profile avatars are intended to be readable by anyone with the URL (same as public
+// profile pages). Writes should still be restricted (e.g. client uploads only for own uid).
+
+service firebase.storage {
+  match /b/{bucket}/o {
+    // Nested avatars: avatars/{uid}/full, thumb, search, etc.
+    match /avatars/{userId}/{allPaths=**} {
+      allow read: if true;
+      allow write: if request.auth != null && request.auth.uid == userId;
+    }
+    // Legacy flat object: avatars/{uid}
+    match /avatars/{userId} {
+      allow read: if true;
+      allow write: if request.auth != null && request.auth.uid == userId;
+    }
+  }
+}

@@ -26,10 +26,13 @@ export function stripFirebaseStorageUrlToken(urlString) {
 }
 
 /**
- * @param {string} bucketName
+ * Public read URL without a download token (requires Storage rules to allow read for this object path).
+ * @param {string} bucketName - e.g. from NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET
  * @param {string} objectPath - e.g. `avatars/{uid}`
+ * @param {string | number} [version] - optional cache-busting query value (e.g. Date.now()).
  */
-export function buildPublicFirebaseDownloadUrl(bucketName, objectPath) {
+export function buildPublicFirebaseDownloadUrl(bucketName, objectPath, version) {
   const encoded = encodeURIComponent(objectPath);
-  return `https://firebasestorage.googleapis.com/v0/b/${bucketName}/o/${encoded}?alt=media`;
+  const base = `https://firebasestorage.googleapis.com/v0/b/${bucketName}/o/${encoded}?alt=media`;
+  return version == null ? base : `${base}&v=${encodeURIComponent(String(version))}`;
 }
