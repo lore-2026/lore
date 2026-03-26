@@ -243,9 +243,23 @@
   flex-wrap: wrap;
 }
 
+.authorLink {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  text-decoration: none;
+  color: inherit;
+  transition: var(--transition-fast);
+}
+
+.authorLink:hover .threadAuthor,
+.authorLink:hover .replyAuthor {
+  color: var(--color-text-secondary);
+}
+
 .threadAuthor {
   font-size: 13px;
-  font-weight: 600;
+  font-weight: 500;
   color: var(--color-text-default);
 }
 
@@ -261,13 +275,13 @@
   background: var(--color-surface-hovered);
   border: 1px solid var(--color-border-default);
   border-radius: 999px;
-  font-size: 11px;
-  font-weight: 500;
+  font-size: 12px;
+  font-weight: 700;
   color: var(--color-text-default);
 }
 
 .ratingBadgeSm {
-  font-size: 10px;
+  font-size: 12px;
   padding: 1px var(--space-1);
 }
 
@@ -300,6 +314,10 @@
 
 .threadActionBtn:hover {
   color: var(--color-text-secondary);
+}
+
+.threadActionBtnDanger:hover {
+  color: #c00f0c !important;
 }
 
 /* ── Replies ── */
@@ -375,7 +393,7 @@
 
 .replyAuthor {
   font-size: 12px;
-  font-weight: 600;
+  font-weight: 500;
   color: var(--color-text-default);
 }
 
@@ -409,6 +427,39 @@
 
 .replyActionBtn:hover {
   color: var(--color-text-secondary);
+}
+
+.replyActionBtnDanger:hover {
+  color: #c00f0c !important;
+}
+
+/* ── Inline edit ── */
+.inlineEdit {
+  margin-bottom: var(--space-3);
+}
+
+.inlineEditInput {
+  width: 100%;
+  padding: var(--space-2) var(--space-3);
+  background: var(--color-surface-default);
+  border: 1px solid var(--color-border-selected);
+  border-radius: var(--radius-md);
+  color: var(--color-text-default);
+  font-size: 14px;
+  font-family: var(--font-sans);
+  outline: none;
+  resize: none;
+  line-height: 1.5;
+  overflow-y: auto;
+  min-height: 60px;
+  max-height: 200px;
+}
+
+.inlineEditActions {
+  display: flex;
+  gap: var(--space-2);
+  justify-content: flex-end;
+  margin-top: var(--space-2);
 }
 
 /* ── Reply composer ── */

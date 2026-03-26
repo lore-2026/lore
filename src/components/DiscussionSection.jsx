@@ -3,12 +3,14 @@
 import { useState, useEffect, useCallback } from 'react';
 import {
   collection, query, orderBy, limit, getDocs, addDoc,
-  updateDoc, doc, arrayUnion, arrayRemove, serverTimestamp,
+  updateDoc, deleteDoc, doc, arrayUnion, arrayRemove, serverTimestamp,
   increment, getDoc, where,
 } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { useAuth } from '../contexts/AuthContext';
-import { MessageSquare } from 'lucide-react';
+import Link from 'next/link';
+import { MessageSquare, Pencil, Trash2 } from 'lucide-react';
+import Modal from './Modal';
 import styles from './DiscussionSection.module.css';
 
 const AVATAR_GRADIENTS = [
@@ -78,6 +80,10 @@ export default function DiscussionSection({ mediaKey, mediaTitle, userScore }) {
   const [openReplyComposer, setOpenReplyComposer] = useState(new Set());
   const [postingReply, setPostingReply] = useState({});
   const [currentUsername, setCurrentUsername] = useState(null);
+  const [editingThread, setEditingThread] = useState(null); // threadId
+  const [editingReply, setEditingReply] = useState(null);   // { threadId, replyId }
+  const [editText, setEditText] = useState('');
+  const [pendingDelete, setPendingDelete] = useState(null); // { type: 'thread'|'reply', threadId, replyId? }
 
   useEffect(() => {
     if (!authUser) return;
@@ -97,14 +103,10 @@ export default function DiscussionSection({ mediaKey, mediaTitle, userScore }) {
     try {
       const threadsRef = collection(db, 'mediaDiscussions', mediaKey, 'threads');
       let q;
-      if (tab === 'friends' && followingList.length > 0) {
-        // Firestore `in` supports up to 30 values
-        const uids = followingList.slice(0, 30);
+      if (tab === 'friends') {
+        // Always include the current user's own posts alongside people they follow
+        const uids = [...new Set([authUser?.uid, ...followingList].filter(Boolean))].slice(0, 30);
         q = query(threadsRef, where('uid', 'in', uids), orderBy('createdAt', 'desc'), limit(20));
-      } else if (tab === 'friends') {
-        setThreads([]);
-        setThreadsLoading(false);
-        return;
       } else {
         q = query(threadsRef, orderBy('voteCount', 'desc'), limit(20));
       }
@@ -115,7 +117,7 @@ export default function DiscussionSection({ mediaKey, mediaTitle, userScore }) {
     } finally {
       setThreadsLoading(false);
     }
-  }, [tab, mediaKey, followingList]);
+  }, [tab, mediaKey, followingList, authUser]);
 
   useEffect(() => { loadThreads(); }, [loadThreads]);
 
@@ -270,6 +272,79 @@ export default function DiscussionSection({ mediaKey, mediaTitle, userScore }) {
     }
   };
 
+  const startEditThread = (thread) => {
+    setEditingThread(thread.id);
+    setEditText(thread.text);
+    setEditingReply(null);
+  };
+
+  const saveEditThread = async (threadId) => {
+    if (!editText.trim()) return;
+    setThreads(prev => prev.map(t => t.id === threadId ? { ...t, text: editText.trim() } : t));
+    setEditingThread(null);
+    try {
+      await updateDoc(doc(db, 'mediaDiscussions', mediaKey, 'threads', threadId), { text: editText.trim() });
+    } catch (e) {
+      console.error('Failed to edit thread', e);
+      loadThreads();
+    }
+  };
+
+  const deleteThread = async (threadId) => {
+    setThreads(prev => prev.filter(t => t.id !== threadId));
+    setPendingDelete(null);
+    try {
+      await deleteDoc(doc(db, 'mediaDiscussions', mediaKey, 'threads', threadId));
+    } catch (e) {
+      console.error('Failed to delete thread', e);
+      loadThreads();
+    }
+  };
+
+  const startEditReply = (threadId, reply) => {
+    setEditingReply({ threadId, replyId: reply.id });
+    setEditText(reply.text);
+    setEditingThread(null);
+  };
+
+  const saveEditReply = async (threadId, replyId) => {
+    if (!editText.trim()) return;
+    setRepliesData(prev => ({
+      ...prev,
+      [threadId]: (prev[threadId] || []).map(r => r.id === replyId ? { ...r, text: editText.trim() } : r),
+    }));
+    setEditingReply(null);
+    try {
+      await updateDoc(
+        doc(db, 'mediaDiscussions', mediaKey, 'threads', threadId, 'replies', replyId),
+        { text: editText.trim() },
+      );
+    } catch (e) {
+      console.error('Failed to edit reply', e);
+    }
+  };
+
+  const deleteReply = async (threadId, replyId) => {
+    setRepliesData(prev => ({
+      ...prev,
+      [threadId]: (prev[threadId] || []).filter(r => r.id !== replyId),
+    }));
+    setThreads(prev => prev.map(t => t.id === threadId ? { ...t, replyCount: Math.max(0, (t.replyCount || 1) - 1) } : t));
+    setPendingDelete(null);
+    try {
+      await deleteDoc(doc(db, 'mediaDiscussions', mediaKey, 'threads', threadId, 'replies', replyId));
+      await updateDoc(doc(db, 'mediaDiscussions', mediaKey, 'threads', threadId), { replyCount: increment(-1) });
+    } catch (e) {
+      console.error('Failed to delete reply', e);
+    }
+  };
+
+  const confirmDelete = () => {
+    if (!pendingDelete) return;
+    if (pendingDelete.type === 'thread') deleteThread(pendingDelete.threadId);
+    else deleteReply(pendingDelete.threadId, pendingDelete.replyId);
+  };
+
   const friendsEmpty = tab === 'friends' && !threadsLoading && threads.length === 0;
 
   return (
@@ -282,7 +357,7 @@ export default function DiscussionSection({ mediaKey, mediaTitle, userScore }) {
           )}
         </div>
         <div className={styles.sortTabs}>
-          {['All', 'Friends'].map(t => (
+          {['Friends', 'All'].map(t => (
             <button
               key={t}
               className={`${styles.sortTab} ${tab === t.toLowerCase() ? styles.sortTabActive : ''}`}
@@ -334,9 +409,7 @@ export default function DiscussionSection({ mediaKey, mediaTitle, userScore }) {
           <div className={styles.emptyText}>Loading discussions…</div>
         ) : friendsEmpty ? (
           <div className={styles.emptyText}>
-            {followingList.length === 0
-              ? 'Follow people to see their takes here.'
-              : 'None of the people you follow have posted about this yet.'}
+            No takes yet — be the first, or follow people to see theirs here.
           </div>
         ) : threads.length === 0 ? (
           <div className={styles.emptyText}>No discussions yet. Be the first to share a take!</div>
@@ -363,15 +436,32 @@ export default function DiscussionSection({ mediaKey, mediaTitle, userScore }) {
 
               <div className={styles.threadBody}>
                 <div className={styles.threadMeta}>
-                  <Avatar uid={thread.uid} photoURL={thread.photoURL} username={thread.username} size="sm" />
-                  <span className={styles.threadAuthor}>{thread.username}</span>
+                  <Link href={`/user?uid=${thread.uid}`} className={styles.authorLink}>
+                    <Avatar uid={thread.uid} photoURL={thread.photoURL} username={thread.username} size="sm" />
+                    <span className={styles.threadAuthor}>{thread.username}</span>
+                  </Link>
                   <span className={styles.threadTime}>{formatTime(thread.createdAt)}</span>
                   {thread.userScore != null && (
                     <span className={styles.ratingBadge}>{thread.userScore}</span>
                   )}
                 </div>
 
-                <p className={styles.threadText}>{thread.text}</p>
+                {editingThread === thread.id ? (
+                  <div className={styles.inlineEdit}>
+                    <textarea
+                      className={styles.inlineEditInput}
+                      value={editText}
+                      onChange={e => setEditText(e.target.value)}
+                      autoFocus
+                    />
+                    <div className={styles.inlineEditActions}>
+                      <button className={`${styles.actionBtn} ${styles.actionBtnCancel}`} onClick={() => setEditingThread(null)}>Cancel</button>
+                      <button className={`${styles.actionBtn} ${!editText.trim() ? styles.actionBtnDisabled : ''}`} onClick={() => saveEditThread(thread.id)} disabled={!editText.trim()}>Save</button>
+                    </div>
+                  </div>
+                ) : (
+                  <p className={styles.threadText}>{thread.text}</p>
+                )}
 
                 <div className={styles.threadActions}>
                   <button className={styles.threadActionBtn} onClick={() => toggleReplies(thread.id)}>
@@ -382,6 +472,16 @@ export default function DiscussionSection({ mediaKey, mediaTitle, userScore }) {
                     <button className={styles.threadActionBtn} onClick={() => openReplyComposerFor(thread.id)}>
                       Reply
                     </button>
+                  )}
+                  {authUser?.uid === thread.uid && (
+                    <>
+                      <button className={styles.threadActionBtn} onClick={() => startEditThread(thread)}>
+                        <Pencil size={12} />
+                      </button>
+                      <button className={`${styles.threadActionBtn} ${styles.threadActionBtnDanger}`} onClick={() => setPendingDelete({ type: 'thread', threadId: thread.id })}>
+                        <Trash2 size={12} />
+                      </button>
+                    </>
                   )}
                 </div>
 
@@ -405,21 +505,48 @@ export default function DiscussionSection({ mediaKey, mediaTitle, userScore }) {
                           </div>
                           <div className={styles.replyBody}>
                             <div className={styles.replyMeta}>
-                              <Avatar uid={reply.uid} photoURL={reply.photoURL} username={reply.username} size="xs" />
-                              <span className={styles.replyAuthor}>{reply.username}</span>
+                              <Link href={`/user?uid=${reply.uid}`} className={styles.authorLink}>
+                                <Avatar uid={reply.uid} photoURL={reply.photoURL} username={reply.username} size="xs" />
+                                <span className={styles.replyAuthor}>{reply.username}</span>
+                              </Link>
                               <span className={styles.replyTime}>{formatTime(reply.createdAt)}</span>
                               {reply.userScore != null && (
                                 <span className={`${styles.ratingBadge} ${styles.ratingBadgeSm}`}>{reply.userScore}</span>
                               )}
                             </div>
-                            <p className={styles.replyText}>{reply.text}</p>
-                            {authUser && (
-                              <div className={styles.replyActions}>
+                            {editingReply?.replyId === reply.id ? (
+                              <div className={styles.inlineEdit}>
+                                <textarea
+                                  className={styles.inlineEditInput}
+                                  value={editText}
+                                  onChange={e => setEditText(e.target.value)}
+                                  autoFocus
+                                />
+                                <div className={styles.inlineEditActions}>
+                                  <button className={`${styles.actionBtn} ${styles.actionBtnCancel}`} onClick={() => setEditingReply(null)}>Cancel</button>
+                                  <button className={`${styles.actionBtn} ${!editText.trim() ? styles.actionBtnDisabled : ''}`} onClick={() => saveEditReply(thread.id, reply.id)} disabled={!editText.trim()}>Save</button>
+                                </div>
+                              </div>
+                            ) : (
+                              <p className={styles.replyText}>{reply.text}</p>
+                            )}
+                            <div className={styles.replyActions}>
+                              {authUser && (
                                 <button className={styles.replyActionBtn} onClick={() => openReplyComposerFor(thread.id)}>
                                   Reply
                                 </button>
-                              </div>
-                            )}
+                              )}
+                              {authUser?.uid === reply.uid && (
+                                <>
+                                  <button className={styles.replyActionBtn} onClick={() => startEditReply(thread.id, reply)}>
+                                    <Pencil size={11} />
+                                  </button>
+                                  <button className={`${styles.replyActionBtn} ${styles.replyActionBtnDanger}`} onClick={() => setPendingDelete({ type: 'reply', threadId: thread.id, replyId: reply.id })}>
+                                    <Trash2 size={11} />
+                                  </button>
+                                </>
+                              )}
+                            </div>
                           </div>
                         </div>
                       );
@@ -467,6 +594,22 @@ export default function DiscussionSection({ mediaKey, mediaTitle, userScore }) {
         <div className={styles.footer}>
           <button className={styles.loadMoreBtn} onClick={loadThreads}>Load more discussions</button>
         </div>
+      )}
+
+      {pendingDelete && (
+        <Modal
+          title="Delete post?"
+          onClose={() => setPendingDelete(null)}
+          maxWidth="360px"
+          actions={[
+            { label: 'Cancel', onClick: () => setPendingDelete(null), variant: 'secondary' },
+            { label: 'Delete', onClick: confirmDelete },
+          ]}
+        >
+          <p style={{ fontSize: '14px', color: 'var(--color-text-secondary)', padding: 'var(--space-4) var(--space-4) 0' }}>
+            This can&apos;t be undone.
+          </p>
+        </Modal>
       )}
     </section>
   );

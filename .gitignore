@@ -14,6 +14,9 @@ service-account.json
 *-firebase-adminsdk-*.json
 lore-*.json
 
+# iOS app secrets (contains Firebase + TMDB API keys — never commit)
+ios/Lore/Lore/Config.swift
+
 # Misc
 .DS_Store
 *.pem
