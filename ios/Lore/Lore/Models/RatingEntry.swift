@@ -64,7 +64,7 @@ struct RatingEntry: Identifiable, Hashable, Sendable {
             if let s = season {
                 return "tv_\(mediaId)_\(s)"
             } else {
-                return "tv_\(mediaId)_show"
+                return "tv_\(mediaId)"
             }
         }
     }
@@ -74,14 +74,31 @@ struct RatingEntry: Identifiable, Hashable, Sendable {
     static func from(docId: String, data: [String: Any]) -> RatingEntry? {
         guard
             let rawType = data["mediaType"] as? String,
-            let mediaType = MediaType(rawValue: rawType),
-            let mediaId = data["mediaId"] as? Int,
-            let rawSentiment = data["sentiment"] as? String,
-            let sentiment = Sentiment(rawValue: rawSentiment)
+            let mediaType = MediaType(rawValue: rawType)
         else { return nil }
 
+        // Sentiment defaults to "good" when absent (matches web app fallback)
+        let rawSentiment = data["sentiment"] as? String ?? "good"
+        let sentiment = Sentiment(rawValue: rawSentiment) ?? .good
+
+        let mediaId: Int
+        if let i = data["mediaId"] as? Int {
+            mediaId = i
+        } else if let d = data["mediaId"] as? Double {
+            mediaId = Int(d)
+        } else if let s = data["mediaId"] as? String, let i = Int(s) {
+            mediaId = i
+        } else {
+            return nil
+        }
+
+        // scoreBasic is the source of truth for display score
         let score: Double
-        if let s = data["score"] as? Double {
+        if let s = data["scoreBasic"] as? Double {
+            score = s
+        } else if let s = data["scoreBasic"] as? Int {
+            score = Double(s)
+        } else if let s = data["score"] as? Double {
             score = s
         } else if let s = data["score"] as? Int {
             score = Double(s)
@@ -96,7 +113,7 @@ struct RatingEntry: Identifiable, Hashable, Sendable {
             mediaName: data["mediaName"] as? String,
             sentiment: sentiment,
             score: score,
-            scoreV2: data["scoreV2"] as? String,
+            scoreV2: data["scoreV2"] as? String,   // never read "score" string; lexorank is write-only
             note: data["note"] as? String,
             timestamp: data["timestamp"] as? String ?? ISO8601DateFormatter().string(from: Date()),
             season: data["season"] as? Int
@@ -108,11 +125,11 @@ struct RatingEntry: Identifiable, Hashable, Sendable {
             "mediaType": mediaType.rawValue,
             "mediaId": mediaId,
             "sentiment": sentiment.rawValue,
-            "score": score,
+            "scoreBasic": score,     // numeric score (source of truth for display)
             "timestamp": timestamp
         ]
         if let name = mediaName { d["mediaName"] = name }
-        if let v2 = scoreV2 { d["scoreV2"] = v2 }
+        if let v2 = scoreV2 { d["score"] = v2 }   // lexorank key stored in "score" field
         if let note = note { d["note"] = note }
         if let season = season { d["season"] = season }
         return d

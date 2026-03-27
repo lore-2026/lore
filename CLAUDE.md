@@ -287,8 +287,8 @@ Subcollections:
 ### `users/{uid}/ratings/{ratingDocId}`
 Rating doc ID format:
 - Movie: `movie_{tmdbId}`
-- TV whole-show: `tv_{tmdbId}_show` (or `tv_{tmdbId}`)
-- TV season: `tv_{tmdbId}_{seasonNum}`
+- TV whole-show: `tv_{tmdbId}` (document at the ratings collection level)
+- TV season: stored as subcollection — `users/{uid}/ratings/tv_{tmdbId}/seasons/{seasonNum}`
 
 ```
 mediaType:    "movie" | "tv"
@@ -324,9 +324,9 @@ sumScores:    number
 // average = sumScores / ratingCount
 ```
 
-Subcollection: `mediaRatings/{mediaKey}/userRatings/{ratingDocId}`
-- Same shape as user rating entry, denormalized for social queries
-- TV seasons also get entries: `userRatings/{uid}_s{seasonNum}`
+Subcollection: `mediaRatings/{mediaKey}/userRatings/{uid}`
+- Same shape as user rating entry, denormalized for social queries (doc ID = user's uid)
+- TV seasons also get entries at: `mediaRatings/tv_{tmdbId}/userRatings/{uid}/seasons/{seasonNum}`
 
 ### `mediaDiscussions/{mediaKey}/threads/{threadId}`
 ```
@@ -400,22 +400,53 @@ getDocs("mediaRatings/{mediaKey}/userRatings",
 ```
 
 ### Ratings — Writes
+
+**Movie rating (save/update):**
 ```
-// Save/update rating
-setDoc("users/{uid}/ratings/{ratingDocId}", ratingEntry)
-setDoc("mediaRatings/{mediaKey}/userRatings/{uid}_show", ratingEntry)   // denormalized
+setDoc("users/{uid}/ratings/movie_{tmdbId}", ratingEntry)
+setDoc("mediaRatings/movie_{tmdbId}/userRatings/{uid}", ratingEntry)   // denormalized
+setDoc("mediaRatings/movie_{tmdbId}", { ratingCount: increment(1) }, merge)
 updateDoc("users/{uid}", { ratingCount: increment(1) })
-updateDoc("mediaRatings/{mediaKey}", { ratingCount: increment(1), sumScores: increment(score) })
+```
 
-// TV season
-setDoc("users/{uid}/ratings/{tv_id}/seasons/{season}", seasonEntry)
-setDoc("mediaRatings/{mediaKey}/userRatings/{uid}_s{season}", seasonEntry)
+**TV whole-show rating (save/update):**
+```
+setDoc("users/{uid}/ratings/tv_{tmdbId}", ratingEntry)
+setDoc("mediaRatings/tv_{tmdbId}/userRatings/{uid}", ratingEntry)      // denormalized
+setDoc("mediaRatings/tv_{tmdbId}", { ratingCount: increment(1) }, merge)
+updateDoc("users/{uid}", { ratingCount: increment(1) })
+```
 
-// Delete rating
-deleteDoc("users/{uid}/ratings/{ratingDocId}")
-deleteDoc("mediaRatings/{mediaKey}/userRatings/{ratingDocId}")
+**TV season rating (save/update):**
+```
+setDoc("users/{uid}/ratings/tv_{tmdbId}/seasons/{seasonNum}", ratingEntry)
+setDoc("mediaRatings/tv_{tmdbId}/userRatings/{uid}/seasons/{seasonNum}", ratingEntry)
+setDoc("mediaRatings/tv_{tmdbId}", { ratingCount: increment(1) }, merge)
+updateDoc("users/{uid}", { ratingCount: increment(1) })
+```
+
+**Delete movie rating:**
+```
+deleteDoc("users/{uid}/ratings/movie_{tmdbId}")
+deleteDoc("mediaRatings/movie_{tmdbId}/userRatings/{uid}")
+runTransaction("mediaRatings/movie_{tmdbId}", { ratingCount: -1, sumScores: -score })
 updateDoc("users/{uid}", { ratingCount: increment(-1) })
-// Recalculate aggregate (fetch remaining, resum)
+```
+
+**Delete TV whole-show rating:**
+```
+deleteDoc("users/{uid}/ratings/tv_{tmdbId}")
+deleteDoc("mediaRatings/tv_{tmdbId}/userRatings/{uid}")
+runTransaction("mediaRatings/tv_{tmdbId}", { ratingCount: -1, sumScores: -score })
+updateDoc("users/{uid}", { ratingCount: increment(-1) })
+```
+
+**Delete TV season rating:**
+```
+deleteDoc("users/{uid}/ratings/tv_{tmdbId}/seasons/{seasonNum}")
+deleteDoc("mediaRatings/tv_{tmdbId}/userRatings/{uid}/seasons/{seasonNum}")
+runTransaction("mediaRatings/tv_{tmdbId}", { ratingCount: -1, sumScores: -score })
+updateDoc("users/{uid}", { ratingCount: increment(-1) })
 ```
 
 ### Social — Follow/Unfollow
@@ -485,6 +516,187 @@ addDoc(".../threads/{id}/replies", { uid, username, photoURL, text, voteCount: 0
 updateDoc(".../threads/{id}", { replyCount: increment(1) })
 
 // Same edit/delete/upvote ops apply to replies
+```
+
+---
+
+## Write Paths by User Action
+
+Complete reference of every Firestore/Storage write triggered by each user action. Verified against web app source (`src/app/`, `src/components/`, `src/lib/`).
+
+### Onboarding — Complete Profile
+```
+batch.set  "users/{uid}"             { firstname, lastname, fullNameLower, email, photoURL,
+                                       username, isDeveloper: false, createdAt,
+                                       lists: { watchlist: [] } }
+batch.set  "usernames/{username}"    { uid }
+// If renaming: batch.delete "usernames/{oldUsername}"
+```
+
+### Onboarding / Settings — Letterboxd Import
+Per successfully matched movie:
+```
+setDoc  "users/{uid}/ratings/movie_{tmdbId}"                    ratingEntry
+setDoc  "mediaRatings/movie_{tmdbId}/userRatings/{uid}"         ratingEntry  (denorm)
+transaction "mediaRatings/movie_{tmdbId}"                       { ratingCount+1, sumScores+score }
+// After all imports:
+updateDoc "users/{uid}"   { ratingCount: newTotal, lastImport: { importedAt, successful, skipped, failed } }
+```
+
+### Details — Rate Movie
+```
+setDoc  "users/{uid}/ratings/movie_{tmdbId}"                    ratingEntry
+setDoc  "mediaRatings/movie_{tmdbId}/userRatings/{uid}"         ratingEntry  (denorm)
+setDoc  "mediaRatings/movie_{tmdbId}"                           { ratingCount+1 }  (merge)
+updateDoc "users/{uid}"                                         { ratingCount+1 }
+// If note provided (new rating only):
+addDoc  "mediaDiscussions/movie_{tmdbId}/threads"               { uid, username, photoURL, text, voteCount:1, upvoterUids:[uid], replyCount:0, createdAt, userScore }
+```
+
+### Details — Rate TV Whole Show
+```
+setDoc  "users/{uid}/ratings/tv_{tmdbId}"                       ratingEntry
+setDoc  "mediaRatings/tv_{tmdbId}/userRatings/{uid}"            ratingEntry  (denorm)
+setDoc  "mediaRatings/tv_{tmdbId}"                              { ratingCount+1 }  (merge)
+updateDoc "users/{uid}"                                         { ratingCount+1 }
+// If note provided (new rating only): same addDoc to discussions as above
+```
+
+### Details — Rate TV Season
+```
+setDoc  "users/{uid}/ratings/tv_{tmdbId}/seasons/{seasonNum}"               ratingEntry
+setDoc  "mediaRatings/tv_{tmdbId}/userRatings/{uid}/seasons/{seasonNum}"    ratingEntry  (denorm)
+setDoc  "mediaRatings/tv_{tmdbId}"                                          { ratingCount+1 }  (merge)
+updateDoc "users/{uid}"                                                     { ratingCount+1 }
+```
+
+### Details — Re-rank (Binary Insertion Sort rebalance)
+Same paths as save above, but `ratingCount` is NOT incremented (rating already existed).
+If rebalance is needed (no room between neighbor keys), batch-updates all affected entries in the sentiment group.
+
+### Details — Delete Movie Rating
+```
+deleteDoc  "users/{uid}/ratings/movie_{tmdbId}"
+deleteDoc  "mediaRatings/movie_{tmdbId}/userRatings/{uid}"
+transaction "mediaRatings/movie_{tmdbId}"                       { ratingCount-1, sumScores-score }
+updateDoc  "users/{uid}"                                        { ratingCount-1 }
+```
+
+### Details — Delete TV Whole Show Rating
+```
+deleteDoc  "users/{uid}/ratings/tv_{tmdbId}"
+deleteDoc  "mediaRatings/tv_{tmdbId}/userRatings/{uid}"
+transaction "mediaRatings/tv_{tmdbId}"                          { ratingCount-1, sumScores-score }
+updateDoc  "users/{uid}"                                        { ratingCount-1 }
+```
+
+### Details — Delete TV Season Rating
+```
+deleteDoc  "users/{uid}/ratings/tv_{tmdbId}/seasons/{seasonNum}"
+deleteDoc  "mediaRatings/tv_{tmdbId}/userRatings/{uid}/seasons/{seasonNum}"
+transaction "mediaRatings/tv_{tmdbId}"                          { ratingCount-1, sumScores-score }
+updateDoc  "users/{uid}"                                        { ratingCount-1 }
+```
+
+### Profile — Upload Avatar
+```
+uploadBytes  Storage: "avatars/{uid}"        (full-size image)
+// Thumbnail at "avatars/{uid}/thumb" generated server-side
+updateDoc  "users/{uid}"                     { photoURL: downloadURL }
+```
+
+### Profile — Change Username
+```
+batch.set    "usernames/{newUsername}"        { uid }
+batch.set    "users/{uid}"                   { username: newUsername }  (merge)
+batch.delete "usernames/{oldUsername}"
+```
+
+### User — Follow
+```
+setDoc  "users/{currentUid}"   { followinglist: arrayUnion(targetUid) }  (merge)
+setDoc  "users/{targetUid}"    { followerlist: arrayUnion(currentUid) }  (merge)
+```
+
+### User — Unfollow
+```
+updateDoc  "users/{currentUid}"   { followinglist: arrayRemove(targetUid) }
+updateDoc  "users/{targetUid}"    { followerlist: arrayRemove(currentUid) }
+```
+
+### Watchlist — Add / Remove
+```
+setDoc  "users/{uid}"   { lists: { watchlist: [...updatedArray] } }  (merge)
+```
+
+### List — Add to Custom List
+```
+updateDoc  "users/{uid}/customLists/{listId}"   { items: [...updatedItems] }
+```
+
+### List — Create Custom List
+```
+addDoc  "users/{uid}/customLists"   { name, description, visibility, items: [], createdAt }
+```
+
+### List — Edit Metadata
+```
+updateDoc  "users/{uid}/customLists/{listId}"   { name, description, visibility }
+```
+
+### List — Delete
+```
+deleteDoc  "users/{uid}/customLists/{listId}"
+```
+
+### Discussion — Post Thread
+```
+addDoc  "mediaDiscussions/{mediaKey}/threads"   { uid, username, photoURL, text,
+                                                  voteCount: 1, upvoterUids: [uid],
+                                                  replyCount: 0, createdAt, userScore }
+```
+
+### Discussion — Edit / Delete Thread
+```
+updateDoc  ".../threads/{threadId}"   { text }           // edit
+deleteDoc  ".../threads/{threadId}"                      // delete
+```
+
+### Discussion — Vote Thread
+```
+updateDoc  ".../threads/{threadId}"   { voteCount: ±1, upvoterUids: arrayUnion/Remove(uid) }
+```
+
+### Discussion — Post Reply
+```
+addDoc     ".../threads/{threadId}/replies"   { uid, username, photoURL, text,
+                                                voteCount: 1, upvoterUids: [uid], createdAt, userScore }
+updateDoc  ".../threads/{threadId}"           { replyCount: +1 }
+```
+
+### Discussion — Edit / Delete / Vote Reply
+```
+updateDoc  ".../replies/{replyId}"   { text }                                    // edit
+deleteDoc  ".../replies/{replyId}"                                               // delete
+updateDoc  ".../threads/{threadId}"  { replyCount: -1 }                         // on delete
+updateDoc  ".../replies/{replyId}"   { voteCount: ±1, upvoterUids: arrayUnion/Remove(uid) }  // vote
+```
+
+### Settings — Delete All Ratings (dev only)
+```
+// For each rating doc:
+batch.delete  "users/{uid}/ratings/{ratingDocId}"
+deleteDoc     "mediaRatings/{mediaKey}/userRatings/{uid}"
+transaction   "mediaRatings/{mediaKey}"   { ratingCount-1, sumScores-score }
+// After all:
+updateDoc     "users/{uid}"   { ratingCount: 0 }
+```
+
+### Settings — Delete Account (dev only)
+All of the above rating deletes, then:
+```
+deleteDoc  "users/{uid}"
+deleteDoc  "usernames/{username}"
 ```
 
 ---

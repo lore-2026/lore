@@ -60,7 +60,7 @@ struct ExploreView: View {
                 }
             }
             .navigationTitle("Explore")
-            .navigationBarTitleDisplayMode(.large)
+            .navigationBarTitleDisplayMode(.inline)
             .toolbarBackground(Color(hex: "#141218"), for: .navigationBar)
             .toolbarColorScheme(.dark, for: .navigationBar)
             .task { await vm.loadTrending() }
@@ -289,6 +289,7 @@ struct PosterThumbnail: View {
 struct AvatarView: View {
     let user: AppUser
     var size: CGFloat = 40
+    @State private var thumbUrl: URL?
 
     var body: some View {
         ZStack {
@@ -296,17 +297,25 @@ struct AvatarView: View {
                 .fill(gradientColor(for: user.id))
                 .frame(width: size, height: size)
 
-            if let urlStr = user.photoURL, let url = URL(string: urlStr) {
+            let imageUrl = thumbUrl ?? user.photoURL.flatMap { URL(string: $0) }
+            if let url = imageUrl {
                 AsyncImage(url: url) { image in
-                    image.resizable().scaledToFill()
+                    image
+                        .resizable()
+                        .scaledToFill()
+                        .frame(width: size, height: size)
+                        .clipShape(Circle())
                 } placeholder: {
                     initialsView
                 }
-                .clipShape(Circle())
-                .frame(width: size, height: size)
             } else {
                 initialsView
             }
+        }
+        .task(id: user.id) {
+            thumbUrl = try? await FirestoreService.shared.storageDownloadUrl(
+                path: "avatars/\(user.id)/thumb"
+            )
         }
     }
 

@@ -246,8 +246,12 @@ private struct InitialRatingView: View {
             Button(action: {
                 guard let user = authVM.currentUser,
                       let sentiment = vm.selectedSentiment else { return }
-                let existing = Array(vm.mySeasonRatings.values)
-                vm.startRating(sentiment: sentiment, season: vm.selectedSeason, existingRatings: existing)
+                vm.startRating(
+                    sentiment: sentiment,
+                    season: vm.selectedSeason,
+                    existingRatings: vm.allMyRatings,
+                    uid: user.id
+                )
             }) {
                 Text("Next")
                     .font(.system(size: 16, weight: .semibold))

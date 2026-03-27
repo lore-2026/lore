@@ -410,23 +410,56 @@ actor FirestoreService {
         }
     }
 
-    // MARK: - List subcollection
+    // MARK: - Firebase Storage
 
-    func listDocuments(path: String) async throws -> [(id: String, data: [String: Any])] {
+    /// Fetches a download URL for a Storage object at the given path (e.g. "avatars/{uid}/thumb").
+    /// Returns nil if the object doesn't exist rather than throwing.
+    func storageDownloadUrl(path: String) async throws -> URL? {
         let token = try await validToken()
-        guard let url = URL(string: "\(Config.firestoreBase)/\(path)") else {
-            throw FirestoreError.invalidURL
-        }
-        var req = URLRequest(url: url)
+        let encodedPath = path
+            .components(separatedBy: "/")
+            .map { $0.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? $0 }
+            .joined(separator: "%2F")
+        guard let metaUrl = URL(string: "\(Config.firebaseStorageBase)/\(encodedPath)") else { return nil }
+        var req = URLRequest(url: metaUrl)
         req.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
 
         let (data, response) = try await URLSession.shared.data(for: req)
         let status = (response as? HTTPURLResponse)?.statusCode ?? 0
-        guard (200...299).contains(status) else { return [] }
-        guard let json = try JSONSerialization.jsonObject(with: data) as? [String: Any],
-              let docs = json["documents"] as? [[String: Any]] else {
-            return []
-        }
-        return docs.map { FSCodec.decodeDocument($0) }
+        guard status == 200,
+              let json = try JSONSerialization.jsonObject(with: data) as? [String: Any],
+              let token = (json["downloadTokens"] as? String)?.components(separatedBy: ",").first
+        else { return nil }
+
+        return URL(string: "\(Config.firebaseStorageBase)/\(encodedPath)?alt=media&token=\(token)")
+    }
+
+    // MARK: - List subcollection
+
+    func listDocuments(path: String) async throws -> [(id: String, data: [String: Any])] {
+        var results: [(id: String, data: [String: Any])] = []
+        var pageToken: String? = nil
+
+        repeat {
+            let token = try await validToken()
+            var urlStr = "\(Config.firestoreBase)/\(path)?pageSize=300"
+            if let pt = pageToken { urlStr += "&pageToken=\(pt)" }
+            guard let url = URL(string: urlStr) else { throw FirestoreError.invalidURL }
+
+            var req = URLRequest(url: url)
+            req.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+
+            let (data, response) = try await URLSession.shared.data(for: req)
+            let status = (response as? HTTPURLResponse)?.statusCode ?? 0
+            guard (200...299).contains(status) else { break }
+            guard let json = try JSONSerialization.jsonObject(with: data) as? [String: Any] else { break }
+
+            if let docs = json["documents"] as? [[String: Any]] {
+                results.append(contentsOf: docs.map { FSCodec.decodeDocument($0) })
+            }
+            pageToken = json["nextPageToken"] as? String
+        } while pageToken != nil
+
+        return results
     }
 }

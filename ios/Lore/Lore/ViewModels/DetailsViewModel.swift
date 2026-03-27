@@ -82,7 +82,7 @@ class DetailsViewModel {
         let path: String
         switch mediaType {
         case .movie: path = "users/\(uid)/ratings/\(docId)"
-        case .tv: path = "users/\(uid)/ratings/tv_\(mediaId)_show"
+        case .tv: path = "users/\(uid)/ratings/tv_\(mediaId)"
         }
 
         if let (id, data) = try await db.getDocument(path: path),
@@ -100,6 +100,11 @@ class DetailsViewModel {
                 }
             }
         }
+
+        // Load all ratings for binary insertion sort comparisons
+        let allDocs = try await db.listDocuments(path: "users/\(uid)/ratings")
+        let entries = allDocs.compactMap { RatingEntry.from(docId: $0.id, data: $0.data) }
+        allMyRatings = RatingsEngine.deriveDisplayScores(for: entries)
     }
 
     private func loadFriendsRatings(mediaType: MediaType, mediaId: Int, followingIds: [String]) async throws {
@@ -137,27 +142,22 @@ class DetailsViewModel {
 
     // MARK: - Start rating
 
-    func startRating(sentiment: Sentiment, season: Int?, existingRatings: [RatingEntry]) {
+    func startRating(sentiment: Sentiment, season: Int?, existingRatings: [RatingEntry], uid: String) {
         selectedSentiment = sentiment
         selectedSeason = season
-        note = ""
 
         // Get entries in the same sentiment group (same type, same season scope)
         let sameSentiment = existingRatings.filter {
             $0.sentiment == sentiment && ($0.season == nil) == (season == nil)
         }
 
-        let sorted = sameSentiment.sorted {
-            if let ka = $0.scoreV2, let kb = $1.scoreV2 {
-                return LexoRank.compare(ka, kb) == .orderedAscending
-            }
-            return $0.score > $1.score
-        }
+        // Sort by scoreBasic descending — lexorank not used for UI
+        let sorted = sameSentiment.sorted { $0.score > $1.score }
 
         if sorted.isEmpty {
-            // No comparisons needed — use initial key
+            // No comparisons needed — first in group
             newEntryKey = LexoRank.initialKey()
-            saveRating(uid: "", key: newEntryKey!)
+            saveRating(uid: uid, key: newEntryKey!, insertAt: 0, groupSize: 1)
             return
         }
 
@@ -188,11 +188,10 @@ class DetailsViewModel {
             comp.currentIndex = next
             comparison = comp
         } else {
-            // Insertion position determined
             let key = RatingsEngine.rankKeyForInsertion(at: newLo, in: comp.entries)
             newEntryKey = key
             comparison = nil
-            saveRating(uid: uid, key: key)
+            saveRating(uid: uid, key: key, insertAt: newLo, groupSize: comp.entries.count + 1)
         }
     }
 
@@ -201,13 +200,19 @@ class DetailsViewModel {
         let key = RatingsEngine.rankKeyForInsertion(at: comp.lo, in: comp.entries)
         newEntryKey = key
         comparison = nil
-        saveRating(uid: uid, key: key)
+        saveRating(uid: uid, key: key, insertAt: comp.lo, groupSize: comp.entries.count + 1)
     }
 
-    private func saveRating(uid: String, key: String) {
+    private func saveRating(uid: String, key: String, insertAt: Int, groupSize: Int) {
         guard !uid.isEmpty,
               let sentiment = selectedSentiment,
               let mediaItem = mediaItem else { return }
+
+        let scoreBasic = RatingsEngine.scoreForPosition(
+            sentiment: sentiment,
+            position: insertAt,
+            total: groupSize
+        )
 
         Task {
             let docId = RatingEntry.docId(mediaType: mediaItem.mediaType, mediaId: mediaItem.id, season: selectedSeason)
@@ -217,7 +222,7 @@ class DetailsViewModel {
                 mediaId: mediaItem.id,
                 mediaName: mediaItem.title,
                 sentiment: sentiment,
-                score: sentiment.scoreRange.upperBound,
+                score: scoreBasic,
                 scoreV2: key,
                 note: note.isEmpty ? nil : note,
                 timestamp: ISO8601DateFormatter().string(from: Date()),
@@ -225,19 +230,20 @@ class DetailsViewModel {
             )
 
             do {
-                let path: String
+                let userPath: String
+                let denormPath: String
+                let mediaKey = "\(mediaItem.mediaType.rawValue)_\(mediaItem.id)"
                 if mediaItem.mediaType == .tv, let season = selectedSeason {
-                    path = "users/\(uid)/ratings/tv_\(mediaItem.id)/seasons/\(season)"
+                    userPath = "users/\(uid)/ratings/tv_\(mediaItem.id)/seasons/\(season)"
+                    denormPath = "mediaRatings/\(mediaKey)/userRatings/\(uid)/seasons/\(season)"
                 } else {
-                    path = "users/\(uid)/ratings/\(docId)"
+                    userPath = "users/\(uid)/ratings/\(docId)"
+                    denormPath = "mediaRatings/\(mediaKey)/userRatings/\(uid)"
                 }
 
                 try await db.commit(writes: [
-                    .init(kind: .set(path: path, data: entry.toFirestoreData())),
-                    .init(kind: .set(
-                        path: "mediaRatings/\(mediaItem.mediaType.rawValue)_\(mediaItem.id)/userRatings/\(docId)",
-                        data: entry.toFirestoreData()
-                    )),
+                    .init(kind: .set(path: userPath, data: entry.toFirestoreData())),
+                    .init(kind: .set(path: denormPath, data: entry.toFirestoreData())),
                     .init(kind: .increment(path: "users/\(uid)", field: "ratingCount", amount: 1))
                 ])
 
@@ -255,18 +261,22 @@ class DetailsViewModel {
     func deleteRating(uid: String, season: Int? = nil) async {
         guard let mediaItem = mediaItem else { return }
         let docId = RatingEntry.docId(mediaType: mediaItem.mediaType, mediaId: mediaItem.id, season: season)
+        let mediaKey = "\(mediaItem.mediaType.rawValue)_\(mediaItem.id)"
 
-        let path: String
+        let userPath: String
+        let denormPath: String
         if mediaItem.mediaType == .tv, let s = season {
-            path = "users/\(uid)/ratings/tv_\(mediaItem.id)/seasons/\(s)"
+            userPath = "users/\(uid)/ratings/tv_\(mediaItem.id)/seasons/\(s)"
+            denormPath = "mediaRatings/\(mediaKey)/userRatings/\(uid)/seasons/\(s)"
         } else {
-            path = "users/\(uid)/ratings/\(docId)"
+            userPath = "users/\(uid)/ratings/\(docId)"
+            denormPath = "mediaRatings/\(mediaKey)/userRatings/\(uid)"
         }
 
         do {
             try await db.commit(writes: [
-                .init(kind: .delete(path: path)),
-                .init(kind: .delete(path: "mediaRatings/\(mediaItem.mediaType.rawValue)_\(mediaItem.id)/userRatings/\(docId)")),
+                .init(kind: .delete(path: userPath)),
+                .init(kind: .delete(path: denormPath)),
                 .init(kind: .increment(path: "users/\(uid)", field: "ratingCount", amount: -1))
             ])
 

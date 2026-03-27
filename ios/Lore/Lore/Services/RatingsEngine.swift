@@ -26,18 +26,15 @@ enum LexoRank {
         var result: UInt64 = 0
         for ch in key {
             guard let idx = alphabet.firstIndex(of: ch) else { continue }
-            result = result * UInt64(base) + UInt64(idx)
+            result = result &* UInt64(base) &+ UInt64(idx)
         }
         return result
     }
 
     // MARK: - Key generation
 
-    static let maxValue: UInt64 = {
-        var v: UInt64 = 0
-        for _ in 0..<length { v = v * UInt64(base) + UInt64(base - 1) }
-        return v
-    }()
+    // 62^12 exceeds UInt64.max, so cap at UInt64.max for safe midpoint arithmetic.
+    static let maxValue: UInt64 = UInt64.max
 
     static func initialKey() -> String {
         encode(maxValue / 2)
@@ -65,9 +62,8 @@ enum LexoRank {
     }
 
     static func compare(_ a: String, _ b: String) -> ComparisonResult {
-        let da = decode(a), db = decode(b)
-        if da < db { return .orderedAscending }
-        if da > db { return .orderedDescending }
+        if a < b { return .orderedAscending }
+        if a > b { return .orderedDescending }
         return .orderedSame
     }
 }
@@ -94,14 +90,13 @@ enum RatingsEngine {
     static func deriveDisplayScores(for entries: [RatingEntry]) -> [RatingEntry] {
         guard !entries.isEmpty else { return [] }
 
-        // Group by sentiment
         var result: [RatingEntry] = []
         let bySentiment = Dictionary(grouping: entries) { $0.sentiment }
 
         for sentiment in Sentiment.allCases {
             guard var group = bySentiment[sentiment] else { continue }
 
-            // Sort by lexorank key (scoreV2), fallback to legacy score descending
+            // Sort by lexorank key (scoreV2), fallback to scoreBasic descending
             group.sort { a, b in
                 if let ka = a.scoreV2, let kb = b.scoreV2 {
                     return LexoRank.compare(ka, kb) == .orderedAscending
