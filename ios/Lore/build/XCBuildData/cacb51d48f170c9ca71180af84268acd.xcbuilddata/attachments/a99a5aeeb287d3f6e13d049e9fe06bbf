@@ -1,0 +1,171 @@
+{
+  "" : {
+    "const-values" : "/Users/alysaliu/lore/ios/Lore/build/Lore.build/Release-iphoneos/Lore.build/Objects-normal/arm64/Lore-primary.swiftconstvalues",
+    "dependencies" : "/Users/alysaliu/lore/ios/Lore/build/Lore.build/Release-iphoneos/Lore.build/Objects-normal/arm64/Lore-primary.d",
+    "diagnostics" : "/Users/alysaliu/lore/ios/Lore/build/Lore.build/Release-iphoneos/Lore.build/Objects-normal/arm64/Lore-primary.dia",
+    "emit-module-dependencies" : "/Users/alysaliu/lore/ios/Lore/build/Lore.build/Release-iphoneos/Lore.build/Objects-normal/arm64/Lore-primary-emit-module.d",
+    "emit-module-diagnostics" : "/Users/alysaliu/lore/ios/Lore/build/Lore.build/Release-iphoneos/Lore.build/Objects-normal/arm64/Lore-primary-emit-module.dia",
+    "pch" : "/Users/alysaliu/lore/ios/Lore/build/Lore.build/Release-iphoneos/Lore.build/Objects-normal/arm64/Lore-primary-Bridging-header.pch",
+    "swift-dependencies" : "/Users/alysaliu/lore/ios/Lore/build/Lore.build/Release-iphoneos/Lore.build/Objects-normal/arm64/Lore-primary.swiftdeps"
+  },
+  "/Users/alysaliu/lore/ios/Lore/Lore/Config.swift" : {
+    "index-unit-output-path" : "/Lore.build/Release-iphoneos/Lore.build/Objects-normal/arm64/Config.o",
+    "llvm-bc" : "/Users/alysaliu/lore/ios/Lore/build/Lore.build/Release-iphoneos/Lore.build/Objects-normal/arm64/Config.bc",
+    "object" : "/Users/alysaliu/lore/ios/Lore/build/Lore.build/Release-iphoneos/Lore.build/Objects-normal/arm64/Config.o"
+  },
+  "/Users/alysaliu/lore/ios/Lore/Lore/ContentView.swift" : {
+    "index-unit-output-path" : "/Lore.build/Release-iphoneos/Lore.build/Objects-normal/arm64/ContentView.o",
+    "llvm-bc" : "/Users/alysaliu/lore/ios/Lore/build/Lore.build/Release-iphoneos/Lore.build/Objects-normal/arm64/ContentView.bc",
+    "object" : "/Users/alysaliu/lore/ios/Lore/build/Lore.build/Release-iphoneos/Lore.build/Objects-normal/arm64/ContentView.o"
+  },
+  "/Users/alysaliu/lore/ios/Lore/Lore/LoreApp.swift" : {
+    "index-unit-output-path" : "/Lore.build/Release-iphoneos/Lore.build/Objects-normal/arm64/LoreApp.o",
+    "llvm-bc" : "/Users/alysaliu/lore/ios/Lore/build/Lore.build/Release-iphoneos/Lore.build/Objects-normal/arm64/LoreApp.bc",
+    "object" : "/Users/alysaliu/lore/ios/Lore/build/Lore.build/Release-iphoneos/Lore.build/Objects-normal/arm64/LoreApp.o"
+  },
+  "/Users/alysaliu/lore/ios/Lore/Lore/Models/ActivityEntry.swift" : {
+    "index-unit-output-path" : "/Lore.build/Release-iphoneos/Lore.build/Objects-normal/arm64/ActivityEntry.o",
+    "llvm-bc" : "/Users/alysaliu/lore/ios/Lore/build/Lore.build/Release-iphoneos/Lore.build/Objects-normal/arm64/ActivityEntry.bc",
+    "object" : "/Users/alysaliu/lore/ios/Lore/build/Lore.build/Release-iphoneos/Lore.build/Objects-normal/arm64/ActivityEntry.o"
+  },
+  "/Users/alysaliu/lore/ios/Lore/Lore/Models/AppUser.swift" : {
+    "index-unit-output-path" : "/Lore.build/Release-iphoneos/Lore.build/Objects-normal/arm64/AppUser.o",
+    "llvm-bc" : "/Users/alysaliu/lore/ios/Lore/build/Lore.build/Release-iphoneos/Lore.build/Objects-normal/arm64/AppUser.bc",
+    "object" : "/Users/alysaliu/lore/ios/Lore/build/Lore.build/Release-iphoneos/Lore.build/Objects-normal/arm64/AppUser.o"
+  },
+  "/Users/alysaliu/lore/ios/Lore/Lore/Models/CustomList.swift" : {
+    "index-unit-output-path" : "/Lore.build/Release-iphoneos/Lore.build/Objects-normal/arm64/CustomList.o",
+    "llvm-bc" : "/Users/alysaliu/lore/ios/Lore/build/Lore.build/Release-iphoneos/Lore.build/Objects-normal/arm64/CustomList.bc",
+    "object" : "/Users/alysaliu/lore/ios/Lore/build/Lore.build/Release-iphoneos/Lore.build/Objects-normal/arm64/CustomList.o"
+  },
+  "/Users/alysaliu/lore/ios/Lore/Lore/Models/DiscussionThread.swift" : {
+    "index-unit-output-path" : "/Lore.build/Release-iphoneos/Lore.build/Objects-normal/arm64/DiscussionThread.o",
+    "llvm-bc" : "/Users/alysaliu/lore/ios/Lore/build/Lore.build/Release-iphoneos/Lore.build/Objects-normal/arm64/DiscussionThread.bc",
+    "object" : "/Users/alysaliu/lore/ios/Lore/build/Lore.build/Release-iphoneos/Lore.build/Objects-normal/arm64/DiscussionThread.o"
+  },
+  "/Users/alysaliu/lore/ios/Lore/Lore/Models/MediaItem.swift" : {
+    "index-unit-output-path" : "/Lore.build/Release-iphoneos/Lore.build/Objects-normal/arm64/MediaItem.o",
+    "llvm-bc" : "/Users/alysaliu/lore/ios/Lore/build/Lore.build/Release-iphoneos/Lore.build/Objects-normal/arm64/MediaItem.bc",
+    "object" : "/Users/alysaliu/lore/ios/Lore/build/Lore.build/Release-iphoneos/Lore.build/Objects-normal/arm64/MediaItem.o"
+  },
+  "/Users/alysaliu/lore/ios/Lore/Lore/Models/RatingEntry.swift" : {
+    "index-unit-output-path" : "/Lore.build/Release-iphoneos/Lore.build/Objects-normal/arm64/RatingEntry.o",
+    "llvm-bc" : "/Users/alysaliu/lore/ios/Lore/build/Lore.build/Release-iphoneos/Lore.build/Objects-normal/arm64/RatingEntry.bc",
+    "object" : "/Users/alysaliu/lore/ios/Lore/build/Lore.build/Release-iphoneos/Lore.build/Objects-normal/arm64/RatingEntry.o"
+  },
+  "/Users/alysaliu/lore/ios/Lore/Lore/Services/AuthService.swift" : {
+    "index-unit-output-path" : "/Lore.build/Release-iphoneos/Lore.build/Objects-normal/arm64/AuthService.o",
+    "llvm-bc" : "/Users/alysaliu/lore/ios/Lore/build/Lore.build/Release-iphoneos/Lore.build/Objects-normal/arm64/AuthService.bc",
+    "object" : "/Users/alysaliu/lore/ios/Lore/build/Lore.build/Release-iphoneos/Lore.build/Objects-normal/arm64/AuthService.o"
+  },
+  "/Users/alysaliu/lore/ios/Lore/Lore/Services/FirestoreService.swift" : {
+    "index-unit-output-path" : "/Lore.build/Release-iphoneos/Lore.build/Objects-normal/arm64/FirestoreService.o",
+    "llvm-bc" : "/Users/alysaliu/lore/ios/Lore/build/Lore.build/Release-iphoneos/Lore.build/Objects-normal/arm64/FirestoreService.bc",
+    "object" : "/Users/alysaliu/lore/ios/Lore/build/Lore.build/Release-iphoneos/Lore.build/Objects-normal/arm64/FirestoreService.o"
+  },
+  "/Users/alysaliu/lore/ios/Lore/Lore/Services/RatingsEngine.swift" : {
+    "index-unit-output-path" : "/Lore.build/Release-iphoneos/Lore.build/Objects-normal/arm64/RatingsEngine.o",
+    "llvm-bc" : "/Users/alysaliu/lore/ios/Lore/build/Lore.build/Release-iphoneos/Lore.build/Objects-normal/arm64/RatingsEngine.bc",
+    "object" : "/Users/alysaliu/lore/ios/Lore/build/Lore.build/Release-iphoneos/Lore.build/Objects-normal/arm64/RatingsEngine.o"
+  },
+  "/Users/alysaliu/lore/ios/Lore/Lore/Services/TMDBService.swift" : {
+    "index-unit-output-path" : "/Lore.build/Release-iphoneos/Lore.build/Objects-normal/arm64/TMDBService.o",
+    "llvm-bc" : "/Users/alysaliu/lore/ios/Lore/build/Lore.build/Release-iphoneos/Lore.build/Objects-normal/arm64/TMDBService.bc",
+    "object" : "/Users/alysaliu/lore/ios/Lore/build/Lore.build/Release-iphoneos/Lore.build/Objects-normal/arm64/TMDBService.o"
+  },
+  "/Users/alysaliu/lore/ios/Lore/Lore/ViewModels/AuthViewModel.swift" : {
+    "index-unit-output-path" : "/Lore.build/Release-iphoneos/Lore.build/Objects-normal/arm64/AuthViewModel.o",
+    "llvm-bc" : "/Users/alysaliu/lore/ios/Lore/build/Lore.build/Release-iphoneos/Lore.build/Objects-normal/arm64/AuthViewModel.bc",
+    "object" : "/Users/alysaliu/lore/ios/Lore/build/Lore.build/Release-iphoneos/Lore.build/Objects-normal/arm64/AuthViewModel.o"
+  },
+  "/Users/alysaliu/lore/ios/Lore/Lore/ViewModels/DetailsViewModel.swift" : {
+    "index-unit-output-path" : "/Lore.build/Release-iphoneos/Lore.build/Objects-normal/arm64/DetailsViewModel.o",
+    "llvm-bc" : "/Users/alysaliu/lore/ios/Lore/build/Lore.build/Release-iphoneos/Lore.build/Objects-normal/arm64/DetailsViewModel.bc",
+    "object" : "/Users/alysaliu/lore/ios/Lore/build/Lore.build/Release-iphoneos/Lore.build/Objects-normal/arm64/DetailsViewModel.o"
+  },
+  "/Users/alysaliu/lore/ios/Lore/Lore/ViewModels/ExploreViewModel.swift" : {
+    "index-unit-output-path" : "/Lore.build/Release-iphoneos/Lore.build/Objects-normal/arm64/ExploreViewModel.o",
+    "llvm-bc" : "/Users/alysaliu/lore/ios/Lore/build/Lore.build/Release-iphoneos/Lore.build/Objects-normal/arm64/ExploreViewModel.bc",
+    "object" : "/Users/alysaliu/lore/ios/Lore/build/Lore.build/Release-iphoneos/Lore.build/Objects-normal/arm64/ExploreViewModel.o"
+  },
+  "/Users/alysaliu/lore/ios/Lore/Lore/ViewModels/HomeViewModel.swift" : {
+    "index-unit-output-path" : "/Lore.build/Release-iphoneos/Lore.build/Objects-normal/arm64/HomeViewModel.o",
+    "llvm-bc" : "/Users/alysaliu/lore/ios/Lore/build/Lore.build/Release-iphoneos/Lore.build/Objects-normal/arm64/HomeViewModel.bc",
+    "object" : "/Users/alysaliu/lore/ios/Lore/build/Lore.build/Release-iphoneos/Lore.build/Objects-normal/arm64/HomeViewModel.o"
+  },
+  "/Users/alysaliu/lore/ios/Lore/Lore/ViewModels/ProfileViewModel.swift" : {
+    "index-unit-output-path" : "/Lore.build/Release-iphoneos/Lore.build/Objects-normal/arm64/ProfileViewModel.o",
+    "llvm-bc" : "/Users/alysaliu/lore/ios/Lore/build/Lore.build/Release-iphoneos/Lore.build/Objects-normal/arm64/ProfileViewModel.bc",
+    "object" : "/Users/alysaliu/lore/ios/Lore/build/Lore.build/Release-iphoneos/Lore.build/Objects-normal/arm64/ProfileViewModel.o"
+  },
+  "/Users/alysaliu/lore/ios/Lore/Lore/Views/Components/ActivityCardView.swift" : {
+    "index-unit-output-path" : "/Lore.build/Release-iphoneos/Lore.build/Objects-normal/arm64/ActivityCardView.o",
+    "llvm-bc" : "/Users/alysaliu/lore/ios/Lore/build/Lore.build/Release-iphoneos/Lore.build/Objects-normal/arm64/ActivityCardView.bc",
+    "object" : "/Users/alysaliu/lore/ios/Lore/build/Lore.build/Release-iphoneos/Lore.build/Objects-normal/arm64/ActivityCardView.o"
+  },
+  "/Users/alysaliu/lore/ios/Lore/Lore/Views/Components/DiscussionSectionView.swift" : {
+    "index-unit-output-path" : "/Lore.build/Release-iphoneos/Lore.build/Objects-normal/arm64/DiscussionSectionView.o",
+    "llvm-bc" : "/Users/alysaliu/lore/ios/Lore/build/Lore.build/Release-iphoneos/Lore.build/Objects-normal/arm64/DiscussionSectionView.bc",
+    "object" : "/Users/alysaliu/lore/ios/Lore/build/Lore.build/Release-iphoneos/Lore.build/Objects-normal/arm64/DiscussionSectionView.o"
+  },
+  "/Users/alysaliu/lore/ios/Lore/Lore/Views/Components/MediaCardView.swift" : {
+    "index-unit-output-path" : "/Lore.build/Release-iphoneos/Lore.build/Objects-normal/arm64/MediaCardView.o",
+    "llvm-bc" : "/Users/alysaliu/lore/ios/Lore/build/Lore.build/Release-iphoneos/Lore.build/Objects-normal/arm64/MediaCardView.bc",
+    "object" : "/Users/alysaliu/lore/ios/Lore/build/Lore.build/Release-iphoneos/Lore.build/Objects-normal/arm64/MediaCardView.o"
+  },
+  "/Users/alysaliu/lore/ios/Lore/Lore/Views/DetailsView.swift" : {
+    "index-unit-output-path" : "/Lore.build/Release-iphoneos/Lore.build/Objects-normal/arm64/DetailsView.o",
+    "llvm-bc" : "/Users/alysaliu/lore/ios/Lore/build/Lore.build/Release-iphoneos/Lore.build/Objects-normal/arm64/DetailsView.bc",
+    "object" : "/Users/alysaliu/lore/ios/Lore/build/Lore.build/Release-iphoneos/Lore.build/Objects-normal/arm64/DetailsView.o"
+  },
+  "/Users/alysaliu/lore/ios/Lore/Lore/Views/ExploreView.swift" : {
+    "index-unit-output-path" : "/Lore.build/Release-iphoneos/Lore.build/Objects-normal/arm64/ExploreView.o",
+    "llvm-bc" : "/Users/alysaliu/lore/ios/Lore/build/Lore.build/Release-iphoneos/Lore.build/Objects-normal/arm64/ExploreView.bc",
+    "object" : "/Users/alysaliu/lore/ios/Lore/build/Lore.build/Release-iphoneos/Lore.build/Objects-normal/arm64/ExploreView.o"
+  },
+  "/Users/alysaliu/lore/ios/Lore/Lore/Views/HomeView.swift" : {
+    "index-unit-output-path" : "/Lore.build/Release-iphoneos/Lore.build/Objects-normal/arm64/HomeView.o",
+    "llvm-bc" : "/Users/alysaliu/lore/ios/Lore/build/Lore.build/Release-iphoneos/Lore.build/Objects-normal/arm64/HomeView.bc",
+    "object" : "/Users/alysaliu/lore/ios/Lore/build/Lore.build/Release-iphoneos/Lore.build/Objects-normal/arm64/HomeView.o"
+  },
+  "/Users/alysaliu/lore/ios/Lore/Lore/Views/ListDetailView.swift" : {
+    "index-unit-output-path" : "/Lore.build/Release-iphoneos/Lore.build/Objects-normal/arm64/ListDetailView.o",
+    "llvm-bc" : "/Users/alysaliu/lore/ios/Lore/build/Lore.build/Release-iphoneos/Lore.build/Objects-normal/arm64/ListDetailView.bc",
+    "object" : "/Users/alysaliu/lore/ios/Lore/build/Lore.build/Release-iphoneos/Lore.build/Objects-normal/arm64/ListDetailView.o"
+  },
+  "/Users/alysaliu/lore/ios/Lore/Lore/Views/LoginView.swift" : {
+    "index-unit-output-path" : "/Lore.build/Release-iphoneos/Lore.build/Objects-normal/arm64/LoginView.o",
+    "llvm-bc" : "/Users/alysaliu/lore/ios/Lore/build/Lore.build/Release-iphoneos/Lore.build/Objects-normal/arm64/LoginView.bc",
+    "object" : "/Users/alysaliu/lore/ios/Lore/build/Lore.build/Release-iphoneos/Lore.build/Objects-normal/arm64/LoginView.o"
+  },
+  "/Users/alysaliu/lore/ios/Lore/Lore/Views/MainTabView.swift" : {
+    "index-unit-output-path" : "/Lore.build/Release-iphoneos/Lore.build/Objects-normal/arm64/MainTabView.o",
+    "llvm-bc" : "/Users/alysaliu/lore/ios/Lore/build/Lore.build/Release-iphoneos/Lore.build/Objects-normal/arm64/MainTabView.bc",
+    "object" : "/Users/alysaliu/lore/ios/Lore/build/Lore.build/Release-iphoneos/Lore.build/Objects-normal/arm64/MainTabView.o"
+  },
+  "/Users/alysaliu/lore/ios/Lore/Lore/Views/OnboardingView.swift" : {
+    "index-unit-output-path" : "/Lore.build/Release-iphoneos/Lore.build/Objects-normal/arm64/OnboardingView.o",
+    "llvm-bc" : "/Users/alysaliu/lore/ios/Lore/build/Lore.build/Release-iphoneos/Lore.build/Objects-normal/arm64/OnboardingView.bc",
+    "object" : "/Users/alysaliu/lore/ios/Lore/build/Lore.build/Release-iphoneos/Lore.build/Objects-normal/arm64/OnboardingView.o"
+  },
+  "/Users/alysaliu/lore/ios/Lore/Lore/Views/ProfileView.swift" : {
+    "index-unit-output-path" : "/Lore.build/Release-iphoneos/Lore.build/Objects-normal/arm64/ProfileView.o",
+    "llvm-bc" : "/Users/alysaliu/lore/ios/Lore/build/Lore.build/Release-iphoneos/Lore.build/Objects-normal/arm64/ProfileView.bc",
+    "object" : "/Users/alysaliu/lore/ios/Lore/build/Lore.build/Release-iphoneos/Lore.build/Objects-normal/arm64/ProfileView.o"
+  },
+  "/Users/alysaliu/lore/ios/Lore/Lore/Views/RootView.swift" : {
+    "index-unit-output-path" : "/Lore.build/Release-iphoneos/Lore.build/Objects-normal/arm64/RootView.o",
+    "llvm-bc" : "/Users/alysaliu/lore/ios/Lore/build/Lore.build/Release-iphoneos/Lore.build/Objects-normal/arm64/RootView.bc",
+    "object" : "/Users/alysaliu/lore/ios/Lore/build/Lore.build/Release-iphoneos/Lore.build/Objects-normal/arm64/RootView.o"
+  },
+  "/Users/alysaliu/lore/ios/Lore/Lore/Views/SettingsView.swift" : {
+    "index-unit-output-path" : "/Lore.build/Release-iphoneos/Lore.build/Objects-normal/arm64/SettingsView.o",
+    "llvm-bc" : "/Users/alysaliu/lore/ios/Lore/build/Lore.build/Release-iphoneos/Lore.build/Objects-normal/arm64/SettingsView.bc",
+    "object" : "/Users/alysaliu/lore/ios/Lore/build/Lore.build/Release-iphoneos/Lore.build/Objects-normal/arm64/SettingsView.o"
+  },
+  "/Users/alysaliu/lore/ios/Lore/build/Lore.build/Release-iphoneos/Lore.build/DerivedSources/GeneratedAssetSymbols.swift" : {
+    "index-unit-output-path" : "/Lore.build/Release-iphoneos/Lore.build/Objects-normal/arm64/GeneratedAssetSymbols.o",
+    "llvm-bc" : "/Users/alysaliu/lore/ios/Lore/build/Lore.build/Release-iphoneos/Lore.build/Objects-normal/arm64/GeneratedAssetSymbols.bc",
+    "object" : "/Users/alysaliu/lore/ios/Lore/build/Lore.build/Release-iphoneos/Lore.build/Objects-normal/arm64/GeneratedAssetSymbols.o"
+  }
+}
