@@ -7,25 +7,58 @@ struct DetailsView: View {
     @State private var vm = DetailsViewModel()
     @Environment(AuthViewModel.self) private var authVM
     @State private var showAddToList = false
+    @State private var showRatingFlow = false
+
+    init(mediaId: Int, mediaType: MediaType) {
+        self.mediaId = mediaId
+        self.mediaType = mediaType
+        let appearance = UINavigationBarAppearance()
+        appearance.configureWithTransparentBackground()
+        appearance.backgroundColor = UIColor(red: 0x14/255, green: 0x12/255, blue: 0x18/255, alpha: 1)
+        appearance.backButtonAppearance.normal.backgroundImage = UIImage()
+        UINavigationBar.appearance().standardAppearance = appearance
+        UINavigationBar.appearance().scrollEdgeAppearance = appearance
+    }
 
     var body: some View {
-        ZStack {
+        ZStack(alignment: .topLeading) {
             Color(hex: "#141218").ignoresSafeArea()
 
             if vm.isLoading {
                 ProgressView().tint(.white)
             } else if let media = vm.mediaItem {
+                // Backdrop pinned behind status bar
+                BackdropView(media: media)
+
                 ScrollView {
                     VStack(alignment: .leading, spacing: 0) {
-                        // Hero section
                         HeroSection(media: media, vm: vm, showAddToList: $showAddToList)
 
-                        // Rating section
-                        RatingSectionView(vm: vm, media: media)
+                        // Overview, genres, runtime
+                        MediaMetadataView(media: media)
                             .padding(.horizontal, 16)
-                            .padding(.top, 24)
+                            .padding(.top, 16)
 
-                        // Discussion
+                        // Rating area — "Add rating" CTA or inline score display
+                        if vm.phase == .done {
+                            DoneRatingView(vm: vm, media: media)
+                                .padding(.horizontal, 16)
+                                .padding(.top, 20)
+                        } else {
+                            Button(action: { showRatingFlow = true }) {
+                                Text("Add rating")
+                                    .font(.system(size: 15, weight: .semibold))
+                                    .foregroundStyle(Color(hex: "#141218"))
+                                    .frame(maxWidth: .infinity)
+                                    .padding(.vertical, 14)
+                                    .background(Color.white)
+                                    .clipShape(RoundedRectangle(cornerRadius: 32))
+                            }
+                            .padding(.horizontal, 16)
+                            .padding(.top, 20)
+                        }
+
+                        // Discussion (only available after rating)
                         if vm.phase == .done {
                             let mediaKey = "\(mediaType.rawValue)_\(mediaId)"
                             DiscussionSectionView(
@@ -50,10 +83,13 @@ struct DetailsView: View {
                 }
                 .padding()
             }
+
+            // Back button overlaid directly — avoids iOS 26 toolbar glass effect
+            BackButtonView(title: vm.mediaItem?.title)
+                .padding(.top, 8)
+                .padding(.leading, 16)
         }
-        .navigationBarTitleDisplayMode(.inline)
-        .toolbarBackground(Color(hex: "#141218"), for: .navigationBar)
-        .toolbarColorScheme(.dark, for: .navigationBar)
+        .navigationBarHidden(true)
         .task {
             if let user = authVM.currentUser {
                 await vm.load(mediaType: mediaType, mediaId: mediaId, currentUser: user)
@@ -68,10 +104,49 @@ struct DetailsView: View {
                 )
             }
         }
+        .fullScreenCover(isPresented: $showRatingFlow, onDismiss: { vm.resetRatingFlow() }) {
+            RatingFlowView(vm: vm)
+        }
     }
 }
 
 // MARK: - Hero
+
+private struct BackdropView: View {
+    let media: MediaItem
+    private let backdropHeight: CGFloat = 320
+
+    var body: some View {
+        if let urlStr = media.backdropUrl(size: "w780"),
+           let url = URL(string: urlStr) {
+            GeometryReader { geo in
+                AsyncImage(url: url) { image in
+                    image
+                        .resizable()
+                        .scaledToFill()
+                        .frame(width: geo.size.width, height: backdropHeight)
+                        .clipped()
+                } placeholder: {
+                    Color.clear
+                }
+            }
+            .frame(height: backdropHeight)
+            .opacity(0.25)
+            .mask(
+                VStack(spacing: 0) {
+                    Color.white
+                    LinearGradient(
+                        colors: [.white, .clear],
+                        startPoint: .top,
+                        endPoint: .bottom
+                    )
+                    .frame(height: backdropHeight * 0.25)
+                }
+            )
+            .ignoresSafeArea(edges: .top)
+        }
+    }
+}
 
 private struct HeroSection: View {
     let media: MediaItem
@@ -79,8 +154,9 @@ private struct HeroSection: View {
     @Binding var showAddToList: Bool
 
     var body: some View {
-        HStack(alignment: .top, spacing: 16) {
-            // Poster
+        VStack(alignment: .leading, spacing: 0) {
+            Color.clear.frame(height: 52)
+
             ZStack(alignment: .topTrailing) {
                 Group {
                     if let url = URL(string: media.posterUrl(size: "w342")) {
@@ -91,8 +167,8 @@ private struct HeroSection: View {
                         Color(hex: "#2b2a33")
                     }
                 }
-                .frame(width: 120, height: 175)
-                .clipShape(RoundedRectangle(cornerRadius: 8))
+                .frame(width: 160, height: 235)
+                .clipShape(RoundedRectangle(cornerRadius: 10))
 
                 Button(action: { showAddToList = true }) {
                     Image(systemName: "plus")
@@ -104,272 +180,8 @@ private struct HeroSection: View {
                 }
                 .padding(6)
             }
-
-            // Info
-            VStack(alignment: .leading, spacing: 6) {
-                Text(media.title)
-                    .font(.system(size: 20, weight: .bold))
-                    .foregroundStyle(.white)
-
-                HStack(spacing: 8) {
-                    if let year = media.releaseYear { Text(year) }
-                    if let runtime = media.runtime { Text("·"); Text("\(runtime) min") }
-                    if let seasons = media.numberOfSeasons { Text("·"); Text("\(seasons) seasons") }
-                }
-                .font(.system(size: 14))
-                .foregroundStyle(.white.opacity(0.5))
-
-                if !media.genres.isEmpty {
-                    Text(media.genres.prefix(3).joined(separator: " · "))
-                        .font(.system(size: 13))
-                        .foregroundStyle(.white.opacity(0.5))
-                }
-
-                // Community average
-                if let avg = vm.communityAverage {
-                    HStack(spacing: 4) {
-                        Image(systemName: "star.fill")
-                            .font(.system(size: 11))
-                        Text(String(format: "%.1f", avg))
-                            .font(.system(size: 13, weight: .semibold))
-                        Text("(\(vm.communityCount))")
-                            .font(.system(size: 12))
-                            .foregroundStyle(.white.opacity(0.5))
-                    }
-                    .foregroundStyle(.white)
-                }
-            }
-
-            Spacer()
-        }
-        .padding(.horizontal, 16)
-        .padding(.top, 16)
-
-        // Overview
-        if !media.overview.isEmpty {
-            Text(media.overview)
-                .font(.system(size: 14))
-                .foregroundStyle(.white.opacity(0.7))
-                .lineLimit(4)
-                .padding(.horizontal, 16)
-                .padding(.top, 12)
-        }
-    }
-}
-
-// MARK: - Rating section
-
-private struct RatingSectionView: View {
-    @Bindable var vm: DetailsViewModel
-    let media: MediaItem
-    @Environment(AuthViewModel.self) private var authVM
-
-    var body: some View {
-        VStack(spacing: 16) {
-            switch vm.phase {
-            case .initial:
-                InitialRatingView(vm: vm, media: media)
-            case .comparing:
-                ComparisonView(vm: vm)
-            case .done:
-                DoneRatingView(vm: vm, media: media)
-            }
-        }
-    }
-}
-
-// MARK: - Initial rating (sentiment picker)
-
-private struct InitialRatingView: View {
-    @Bindable var vm: DetailsViewModel
-    let media: MediaItem
-    @Environment(AuthViewModel.self) private var authVM
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            Text("Rate this")
-                .font(.system(size: 18, weight: .semibold))
-                .foregroundStyle(.white)
-
-            // Sentiment buttons
-            HStack(spacing: 8) {
-                ForEach(Sentiment.allCases, id: \.self) { sentiment in
-                    SentimentButton(
-                        sentiment: sentiment,
-                        isSelected: vm.selectedSentiment == sentiment,
-                        action: { vm.selectedSentiment = sentiment }
-                    )
-                }
-            }
-
-            // Season picker (TV only)
-            if media.mediaType == .tv, let seasons = media.seasons, !seasons.isEmpty {
-                Menu {
-                    Button("Whole show") { vm.selectedSeason = nil }
-                    ForEach(seasons) { season in
-                        Button("Season \(season.seasonNumber)") {
-                            vm.selectedSeason = season.seasonNumber
-                        }
-                    }
-                } label: {
-                    HStack {
-                        Text(vm.selectedSeason.map { "Season \($0)" } ?? "Whole show")
-                            .foregroundStyle(.white)
-                        Spacer()
-                        Image(systemName: "chevron.down")
-                            .foregroundStyle(.white.opacity(0.5))
-                    }
-                    .padding(.horizontal, 14)
-                    .padding(.vertical, 12)
-                    .background(Color(hex: "#1c1b21"))
-                    .clipShape(RoundedRectangle(cornerRadius: 8))
-                    .overlay(RoundedRectangle(cornerRadius: 8).stroke(Color(hex: "#2a2930")))
-                }
-            }
-
-            // Note field
-            VStack(alignment: .leading, spacing: 6) {
-                Text("Add a note (optional)")
-                    .font(.system(size: 13))
-                    .foregroundStyle(.white.opacity(0.5))
-                TextField("What did you think?", text: $vm.note, axis: .vertical)
-                    .textFieldStyle(.plain)
-                    .foregroundStyle(.white)
-                    .lineLimit(3, reservesSpace: true)
-                    .padding(12)
-                    .background(Color(hex: "#1c1b21"))
-                    .clipShape(RoundedRectangle(cornerRadius: 8))
-                    .overlay(RoundedRectangle(cornerRadius: 8).stroke(Color(hex: "#2a2930")))
-            }
-
-            // Next button
-            Button(action: {
-                guard let user = authVM.currentUser,
-                      let sentiment = vm.selectedSentiment else { return }
-                vm.startRating(
-                    sentiment: sentiment,
-                    season: vm.selectedSeason,
-                    existingRatings: vm.allMyRatings,
-                    uid: user.id
-                )
-            }) {
-                Text("Next")
-                    .font(.system(size: 16, weight: .semibold))
-                    .foregroundStyle(vm.selectedSentiment != nil ? Color(hex: "#141218") : Color(hex: "#141218").opacity(0.5))
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 14)
-                    .background(vm.selectedSentiment != nil ? Color.white : Color.white.opacity(0.3))
-                    .clipShape(RoundedRectangle(cornerRadius: 32))
-            }
-            .disabled(vm.selectedSentiment == nil)
-        }
-        .padding(16)
-        .background(Color(hex: "#1c1b21"))
-        .clipShape(RoundedRectangle(cornerRadius: 12))
-    }
-}
-
-private struct SentimentButton: View {
-    let sentiment: Sentiment
-    let isSelected: Bool
-    let action: () -> Void
-
-    var body: some View {
-        Button(action: action) {
-            VStack(spacing: 4) {
-                Text(sentiment.emoji)
-                    .font(.system(size: 24))
-                Text(sentiment.displayName)
-                    .font(.system(size: 11))
-                    .foregroundStyle(isSelected ? Color(hex: "#141218") : .white)
-            }
             .frame(maxWidth: .infinity)
-            .padding(.vertical, 10)
-            .background(isSelected ? Color.white : Color(hex: "#2b2a33"))
-            .clipShape(RoundedRectangle(cornerRadius: 8))
-        }
-    }
-}
-
-// MARK: - Comparison view (binary sort)
-
-private struct ComparisonView: View {
-    @Bindable var vm: DetailsViewModel
-    @Environment(AuthViewModel.self) private var authVM
-
-    var body: some View {
-        VStack(spacing: 16) {
-            Text("Which did you like more?")
-                .font(.system(size: 18, weight: .semibold))
-                .foregroundStyle(.white)
-
-            if let comp = vm.comparison, let compEntry = comp.currentComparison {
-                HStack(spacing: 12) {
-                    // Current (new) item
-                    ComparisonCard(
-                        title: vm.mediaItem?.title ?? "",
-                        subtitle: "New rating",
-                        action: {
-                            if let uid = authVM.currentUser?.id {
-                                vm.compareChoice(preferNewItem: true, uid: uid)
-                            }
-                        }
-                    )
-
-                    Text("vs")
-                        .font(.system(size: 14, weight: .medium))
-                        .foregroundStyle(.white.opacity(0.5))
-
-                    // Comparison item
-                    ComparisonCard(
-                        title: compEntry.mediaName ?? "Unknown",
-                        subtitle: String(format: "%.1f", compEntry.displayScore ?? compEntry.score),
-                        action: {
-                            if let uid = authVM.currentUser?.id {
-                                vm.compareChoice(preferNewItem: false, uid: uid)
-                            }
-                        }
-                    )
-                }
-
-                Button(action: {
-                    if let uid = authVM.currentUser?.id {
-                        vm.skipComparison(uid: uid)
-                    }
-                }) {
-                    Text("Skip")
-                        .font(.system(size: 14))
-                        .foregroundStyle(.white.opacity(0.5))
-                }
-            }
-        }
-        .padding(16)
-        .background(Color(hex: "#1c1b21"))
-        .clipShape(RoundedRectangle(cornerRadius: 12))
-    }
-}
-
-private struct ComparisonCard: View {
-    let title: String
-    let subtitle: String
-    let action: () -> Void
-
-    var body: some View {
-        Button(action: action) {
-            VStack(spacing: 6) {
-                Text(title)
-                    .font(.system(size: 14, weight: .medium))
-                    .foregroundStyle(.white)
-                    .lineLimit(2)
-                    .multilineTextAlignment(.center)
-                Text(subtitle)
-                    .font(.system(size: 12))
-                    .foregroundStyle(.white.opacity(0.5))
-            }
-            .frame(maxWidth: .infinity)
-            .padding(12)
-            .background(Color(hex: "#2b2a33"))
-            .clipShape(RoundedRectangle(cornerRadius: 8))
+            .padding(.top, 20)
         }
     }
 }
@@ -382,73 +194,161 @@ private struct DoneRatingView: View {
     @Environment(AuthViewModel.self) private var authVM
 
     var body: some View {
-        VStack(spacing: 16) {
-            HStack {
-                Text("Your rating")
-                    .font(.system(size: 18, weight: .semibold))
-                    .foregroundStyle(.white)
-                Spacer()
-
-                HStack(spacing: 8) {
-                    Button(action: {
-                        vm.phase = .initial
-                        vm.selectedSentiment = vm.myRating?.sentiment
-                    }) {
-                        Image(systemName: "arrow.counterclockwise")
-                            .foregroundStyle(.white.opacity(0.6))
-                    }
-
-                    Button(action: {
-                        if let uid = authVM.currentUser?.id {
-                            Task { await vm.deleteRating(uid: uid) }
-                        }
-                    }) {
-                        Image(systemName: "trash")
-                            .foregroundStyle(Color(hex: "#FF6B6B").opacity(0.8))
-                    }
-                }
-            }
-
+        VStack(spacing: 12) {
             if let rating = vm.myRating {
-                HStack(spacing: 16) {
-                    // Score
-                    VStack(spacing: 4) {
-                        Text(String(format: "%.1f", rating.displayScore ?? rating.score))
-                            .font(.system(size: 36, weight: .bold))
-                            .foregroundStyle(.white)
-                        Text(rating.sentiment.displayName)
-                            .font(.system(size: 13))
-                            .foregroundStyle(.white.opacity(0.5))
-                    }
-                    .frame(width: 80)
-                    .padding(.vertical, 12)
-                    .background(Color(hex: "#2b2a33"))
-                    .clipShape(RoundedRectangle(cornerRadius: 8))
-
-                    VStack(alignment: .leading, spacing: 8) {
-                        if let note = rating.note, !note.isEmpty {
-                            Text(note)
-                                .font(.system(size: 14))
-                                .foregroundStyle(.white.opacity(0.8))
-                                .lineLimit(3)
-                        }
-                        if !vm.friendsRatings.isEmpty {
-                            let avg = RatingsEngine.average(scores: vm.friendsRatings.values.compactMap {
-                                $0.displayScore ?? $0.score
-                            })
-                            if let avg {
-                                Text("Friends avg: \(String(format: "%.1f", avg))")
-                                    .font(.system(size: 13))
-                                    .foregroundStyle(.white.opacity(0.5))
-                            }
-                        }
-                    }
+                // Note
+                if let note = rating.note, !note.isEmpty {
+                    Text(note)
+                        .font(.system(size: 14))
+                        .foregroundStyle(.white.opacity(0.8))
+                        .lineLimit(3)
                 }
+
+                // Score cards
+                RatingScoreCards(vm: vm, myRating: rating)
             }
         }
-        .padding(16)
-        .background(Color(hex: "#1c1b21"))
-        .clipShape(RoundedRectangle(cornerRadius: 12))
+    }
+}
+
+// MARK: - Rating score cards
+
+private struct RatingScoreCards: View {
+    let vm: DetailsViewModel
+    let myRating: RatingEntry
+
+    var body: some View {
+        HStack(spacing: 10) {
+            ScoreCard(
+                label: "Your rating",
+                score: myRating.displayScore ?? myRating.score
+            )
+
+            ScoreCard(
+                label: "Friends",
+                score: RatingsEngine.average(scores: vm.friendsRatings.values.compactMap {
+                    $0.displayScore ?? $0.score
+                })
+            )
+
+            ScoreCard(
+                label: "Community",
+                score: vm.communityAverage
+            )
+        }
+    }
+}
+
+private struct ScoreCard: View {
+    let label: String
+    let score: Double?
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text(label)
+                .font(.system(size: 13))
+                .foregroundStyle(.white.opacity(0.5))
+
+            Text(score.map { String(format: "%.1f", $0) } ?? "—")
+                .font(.system(size: 28, weight: .bold))
+                .foregroundStyle(.white)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(12)
+        .background {
+            BlurView(style: .systemThinMaterialDark)
+                .opacity(0.6)
+                .clipShape(RoundedRectangle(cornerRadius: 8))
+        }
+        .overlay(
+            RoundedRectangle(cornerRadius: 8)
+                .stroke(Color(hex: "#2a2930"), lineWidth: 1)
+        )
+    }
+}
+
+private struct BlurView: UIViewRepresentable {
+    let style: UIBlurEffect.Style
+    func makeUIView(context: Context) -> UIVisualEffectView {
+        UIVisualEffectView(effect: UIBlurEffect(style: style))
+    }
+    func updateUIView(_ uiView: UIVisualEffectView, context: Context) {}
+}
+
+// MARK: - Media metadata (certification, year, genres, runtime)
+
+private struct MediaMetadataView: View {
+    let media: MediaItem
+    @State private var overviewExpanded = false
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            // Metadata line
+            let parts = metadataParts
+            if !parts.isEmpty {
+                HStack(spacing: 6) {
+                    ForEach(Array(parts.enumerated()), id: \.offset) { index, part in
+                        if index == 0, media.certification != nil {
+                            // Certification badge
+                            Text(part)
+                                .font(.system(size: 13, weight: .medium))
+                                .foregroundStyle(.white.opacity(0.6))
+                                .padding(.horizontal, 5)
+                                .padding(.vertical, 2)
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 3)
+                                        .stroke(.white.opacity(0.3), lineWidth: 1)
+                                )
+                        } else {
+                            if index > 0 {
+                                Text("·")
+                                    .foregroundStyle(.white.opacity(0.4))
+                                    .font(.system(size: 13))
+                            }
+                            Text(part)
+                                .font(.system(size: 13))
+                                .foregroundStyle(.white.opacity(0.6))
+                        }
+                    }
+                }
+            }
+
+            // Overview
+            if !media.overview.isEmpty {
+                Text(media.overview)
+                    .font(.system(size: 14))
+                    .foregroundStyle(.white.opacity(0.7))
+                    .lineLimit(overviewExpanded ? nil : 4)
+                    .onTapGesture { overviewExpanded.toggle() }
+                    .animation(.easeInOut(duration: 0.2), value: overviewExpanded)
+            }
+        }
+    }
+
+    private var metadataParts: [String] {
+        var parts: [String] = []
+        if let cert = media.certification, !cert.isEmpty {
+            parts.append(cert)
+        }
+        if let year = media.releaseYear {
+            parts.append(year)
+        }
+        if !media.genres.isEmpty {
+            parts.append(media.genres.prefix(2).joined(separator: "/"))
+        }
+        if let runtime = media.runtime, runtime > 0 {
+            let hours = runtime / 60
+            let mins = runtime % 60
+            if hours > 0 {
+                parts.append("\(hours)h \(mins)m")
+            } else {
+                parts.append("\(mins)m")
+            }
+        }
+        if let seasons = media.numberOfSeasons {
+            parts.append("\(seasons) season\(seasons == 1 ? "" : "s")")
+        }
+        return parts
     }
 }
 
@@ -458,29 +358,352 @@ struct AddToListSheet: View {
     let mediaId: String
     let mediaType: MediaType
     let currentUser: AppUser
+
     @State private var vm = ProfileViewModel()
+    @State private var showCreate = false
     @Environment(\.dismiss) private var dismiss
 
     var body: some View {
         NavigationStack {
-            ZStack {
-                Color(hex: "#141218").ignoresSafeArea()
-                VStack {
+            listPickerView
+                .navigationDestination(isPresented: $showCreate) {
+                    CreateListView(
+                        mediaId: mediaId,
+                        mediaType: mediaType,
+                        currentUser: currentUser,
+                        vm: vm,
+                        onCreated: { dismiss() }
+                    )
+                }
+        }
+        .task {
+            await vm.loadListsIfNeeded(uid: currentUser.id, isOwner: true)
+        }
+    }
+
+    // Synthetic watchlist entry built from the user's watchlist array
+    private var watchlistEntry: CustomList {
+        let items = currentUser.watchlist.map {
+            ListItem(mediaId: $0.mediaId, mediaType: $0.mediaType, timestamp: $0.timestamp)
+        }
+        return CustomList(id: "watchlist", name: "Watchlist", description: "", visibility: .publicList, items: items)
+    }
+
+    private var allLists: [CustomList] {
+        [watchlistEntry] + vm.customLists
+    }
+
+    private var listPickerView: some View {
+        ZStack(alignment: .bottom) {
+            Color(hex: "#141218").ignoresSafeArea()
+
+            VStack(spacing: 0) {
+                // Drag indicator
+                Capsule()
+                    .fill(Color.white.opacity(0.25))
+                    .frame(width: 36, height: 4)
+                    .padding(.top, 10)
+                    .padding(.bottom, 6)
+
+                Group {
                     if vm.isLoading {
                         ProgressView().tint(.white)
+                            .frame(maxHeight: .infinity)
                     } else {
-                        Text("Add to list functionality")
-                            .foregroundStyle(.white.opacity(0.5))
+                        ScrollView {
+                            VStack(spacing: 0) {
+                                ForEach(allLists) { list in
+                                    ListPickerRow(
+                                        list: list,
+                                        mediaId: mediaId,
+                                        mediaType: mediaType
+                                    ) {
+                                        Task {
+                                            if list.id == "watchlist" {
+                                                await vm.toggleWatchlist(
+                                                    mediaId: mediaId,
+                                                    mediaType: mediaType,
+                                                    currentUser: currentUser
+                                                )
+                                            } else {
+                                                try? await vm.addItemToList(
+                                                    listId: list.id,
+                                                    mediaId: mediaId,
+                                                    mediaType: mediaType,
+                                                    ownerUid: currentUser.id
+                                                )
+                                            }
+                                            dismiss()
+                                        }
+                                    }
+                                    Divider()
+                                        .background(Color(hex: "#2a2930"))
+                                }
+                                Color.clear.frame(height: 96)
+                            }
+                        }
                     }
                 }
             }
-            .navigationTitle("Add to List")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel") { dismiss() }
+
+            // Pinned CTA
+            VStack(spacing: 0) {
+                Button(action: { showCreate = true }) {
+                    Text("Add to new list")
+                        .font(.system(size: 16, weight: .semibold))
+                        .foregroundStyle(Color(hex: "#141218"))
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 16)
+                        .background(Color.white)
+                        .clipShape(RoundedRectangle(cornerRadius: 32))
+                }
+                .padding(.horizontal, 16)
+                .padding(.top, 12)
+                .padding(.bottom, 34)
+            }
+            .background(Color(hex: "#141218"))
+        }
+        .navigationBarHidden(true)
+    }
+}
+
+private struct ListPickerRow: View {
+    let list: CustomList
+    let mediaId: String
+    let mediaType: MediaType
+    let onTap: () -> Void
+
+    @State private var posterURLs: [URL?] = []
+
+    private var isAlreadyAdded: Bool {
+        list.items.contains { $0.mediaId == mediaId && $0.mediaType == mediaType }
+    }
+
+    var body: some View {
+        Button(action: onTap) {
+            VStack(alignment: .leading, spacing: 10) {
+                HStack(alignment: .center) {
+                    VStack(alignment: .leading, spacing: 3) {
+                        Text(list.name)
+                            .font(.system(size: 16, weight: .semibold))
+                            .foregroundStyle(.white)
+                        if !list.description.isEmpty {
+                            Text(list.description)
+                                .font(.system(size: 13))
+                                .foregroundStyle(.white.opacity(0.45))
+                                .lineLimit(1)
+                        }
+                    }
+                    Spacer()
+                    if isAlreadyAdded {
+                        Image(systemName: "checkmark")
+                            .font(.system(size: 14, weight: .semibold))
+                            .foregroundStyle(.white.opacity(0.45))
+                    }
+                }
+
+                if !list.items.isEmpty {
+                    ScrollView(.horizontal, showsIndicators: false) {
+                        HStack(spacing: 5) {
+                            ForEach(Array(list.items.prefix(8).enumerated()), id: \.offset) { idx, _ in
+                                Group {
+                                    if idx < posterURLs.count, let url = posterURLs[idx] {
+                                        AsyncImage(url: url) { phase in
+                                            if case .success(let img) = phase {
+                                                img.resizable().scaledToFill()
+                                            } else {
+                                                Color(hex: "#2b2a33")
+                                            }
+                                        }
+                                    } else {
+                                        Color(hex: "#2b2a33")
+                                    }
+                                }
+                                .frame(width: 46, height: 68)
+                                .clipShape(RoundedRectangle(cornerRadius: 4))
+                            }
+                        }
+                    }
                 }
             }
+            .padding(.horizontal, 20)
+            .padding(.vertical, 16)
         }
+        .buttonStyle(.plain)
+        .task(id: list.id) {
+            let items = Array(list.items.prefix(8))
+            var urls: [URL?] = Array(repeating: nil, count: items.count)
+            posterURLs = urls
+            await withTaskGroup(of: (Int, URL?).self) { group in
+                for (idx, item) in items.enumerated() {
+                    group.addTask {
+                        guard let id = Int(item.mediaId),
+                              let media = try? await TMDBService.shared.fetchDetails(
+                                  mediaType: item.mediaType, id: id),
+                              let path = media.posterPath
+                        else { return (idx, nil) }
+                        return (idx, URL(string: "\(Config.tmdbImageBase)/w185\(path)"))
+                    }
+                }
+                for await (idx, url) in group {
+                    urls[idx] = url
+                }
+            }
+            posterURLs = urls
+        }
+    }
+}
+
+private struct CreateListView: View {
+    let mediaId: String
+    let mediaType: MediaType
+    let currentUser: AppUser
+    @Bindable var vm: ProfileViewModel
+    let onCreated: () -> Void
+
+    @State private var name = ""
+    @State private var description = ""
+    @State private var visibility: ListVisibility = .publicList
+    @State private var isSaving = false
+    @Environment(\.dismiss) private var dismiss
+
+    var body: some View {
+        ZStack {
+            Color(hex: "#141218").ignoresSafeArea()
+
+            VStack(spacing: 0) {
+                // Top bar
+                HStack {
+                    Button(action: { dismiss() }) {
+                        Image(systemName: "chevron.left")
+                            .font(.system(size: 20, weight: .semibold))
+                            .foregroundStyle(.white)
+                    }
+                    Spacer()
+                    Text("Create new list")
+                        .font(.system(size: 17, weight: .semibold))
+                        .foregroundStyle(.white)
+                    Spacer()
+                    Color.clear.frame(width: 20)
+                }
+                .padding(.horizontal, 20)
+                .padding(.top, 16)
+                .padding(.bottom, 24)
+
+                VStack(spacing: 12) {
+                    // Name field
+                    TextField("Name", text: $name)
+                        .textFieldStyle(.plain)
+                        .foregroundStyle(.white)
+                        .tint(.white)
+                        .padding(16)
+                        .background(Color(hex: "#1c1b21"))
+                        .clipShape(RoundedRectangle(cornerRadius: 12))
+
+                    // Description field
+                    TextField("Description", text: $description, axis: .vertical)
+                        .textFieldStyle(.plain)
+                        .foregroundStyle(.white)
+                        .tint(.white)
+                        .lineLimit(4, reservesSpace: true)
+                        .padding(16)
+                        .background(Color(hex: "#1c1b21"))
+                        .clipShape(RoundedRectangle(cornerRadius: 12))
+
+                    // Public / Private toggle
+                    HStack(spacing: 0) {
+                        ForEach(ListVisibility.allCases, id: \.self) { option in
+                            Button(action: { visibility = option }) {
+                                Text(option.displayName)
+                                    .font(.system(size: 15, weight: .semibold))
+                                    .foregroundStyle(.white)
+                                    .frame(maxWidth: .infinity)
+                                    .padding(.vertical, 12)
+                                    .background(
+                                        visibility == option
+                                            ? Color(hex: "#2b2a33")
+                                            : Color.clear
+                                    )
+                                    .clipShape(RoundedRectangle(cornerRadius: 10))
+                            }
+                            .buttonStyle(.plain)
+                        }
+                    }
+                    .padding(4)
+                    .background(Color(hex: "#1c1b21"))
+                    .clipShape(RoundedRectangle(cornerRadius: 14))
+                }
+                .padding(.horizontal, 20)
+
+                Spacer()
+
+                // Pinned CTA
+                Button(action: {
+                    guard !name.isEmpty, !isSaving else { return }
+                    isSaving = true
+                    Task {
+                        do {
+                            try await vm.createList(
+                                name: name,
+                                description: description,
+                                visibility: visibility,
+                                ownerUid: currentUser.id
+                            )
+                            // Add the media to the newly created list
+                            if let newList = vm.customLists.last {
+                                try await vm.addItemToList(
+                                    listId: newList.id,
+                                    mediaId: mediaId,
+                                    mediaType: mediaType,
+                                    ownerUid: currentUser.id
+                                )
+                            }
+                            onCreated()
+                        } catch {
+                            isSaving = false
+                        }
+                    }
+                }) {
+                    Group {
+                        if isSaving {
+                            ProgressView().tint(Color(hex: "#141218"))
+                        } else {
+                            Text("Create and add")
+                                .font(.system(size: 16, weight: .semibold))
+                                .foregroundStyle(Color(hex: "#141218"))
+                        }
+                    }
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 16)
+                    .background(name.isEmpty ? Color.white.opacity(0.35) : Color.white)
+                    .clipShape(RoundedRectangle(cornerRadius: 32))
+                }
+                .disabled(name.isEmpty || isSaving)
+                .padding(.horizontal, 16)
+                .padding(.bottom, 34)
+            }
+        }
+        .navigationBarHidden(true)
+    }
+}
+
+private struct BackButtonView: View {
+    let title: String?
+    @Environment(\.dismiss) private var dismiss
+
+    var body: some View {
+        Button(action: { dismiss() }) {
+            HStack(spacing: 4) {
+                Image(systemName: "chevron.left")
+                    .font(.system(size: 23, weight: .semibold))
+                if let title {
+                    Text(title)
+                        .font(.system(size: 23, weight: .semibold))
+                        .lineLimit(1)
+                }
+            }
+            .foregroundStyle(.white)
+        }
+        .buttonStyle(.plain)
     }
 }

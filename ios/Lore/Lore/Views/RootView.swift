@@ -2,10 +2,11 @@ import SwiftUI
 
 struct RootView: View {
     @State private var authVM = AuthViewModel()
+    @State private var minDelayElapsed = false
 
     var body: some View {
         Group {
-            if authVM.isLoading {
+            if authVM.isLoading || !minDelayElapsed {
                 SplashView()
             } else if !authVM.isLoggedIn {
                 LoginView(authVM: authVM)
@@ -16,6 +17,10 @@ struct RootView: View {
             }
         }
         .environment(authVM)
+        .task {
+            try? await Task.sleep(for: .seconds(1.5))
+            minDelayElapsed = true
+        }
     }
 }
 
@@ -26,9 +31,10 @@ struct SplashView: View {
         ZStack {
             Color(hex: "#141218").ignoresSafeArea()
             VStack(spacing: 16) {
-                Image(systemName: "play.circle.fill")
-                    .font(.system(size: 64))
-                    .foregroundStyle(.white)
+                Image("lore-logo 1")
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: 120, height: 120)
                 Text("Lore")
                     .font(.system(size: 32, weight: .bold, design: .rounded))
                     .foregroundStyle(.white)

@@ -47,6 +47,11 @@ class DetailsViewModel {
     // Watchlist
     var isInWatchlist = false
 
+    // Poster / year cache for comparison cards
+    var comparisonMediaCache: [Int: MediaItem] = [:]
+
+    private(set) var currentUser: AppUser?
+
     private let db = FirestoreService.shared
     private let tmdb = TMDBService.shared
 
@@ -55,6 +60,8 @@ class DetailsViewModel {
     func load(mediaType: MediaType, mediaId: Int, currentUser: AppUser) async {
         isLoading = true
         defer { isLoading = false }
+
+        self.currentUser = currentUser
 
         do {
             async let media = tmdb.fetchDetails(mediaType: mediaType, id: mediaId)
@@ -146,13 +153,35 @@ class DetailsViewModel {
         selectedSentiment = sentiment
         selectedSeason = season
 
-        // Get entries in the same sentiment group (same type, same season scope)
-        let sameSentiment = existingRatings.filter {
-            $0.sentiment == sentiment && ($0.season == nil) == (season == nil)
+        guard let mediaItem = mediaItem else { return }
+
+        // Build candidate pool — mirrors web's isComparableCandidate + ratings[mediaType][sentiment] lookup:
+        //   TV season:      only other rated seasons of this exact show
+        //   Movie/TV show:  only whole-show/movie entries of the same media type
+        // In both cases, exclude the item currently being rated (handles re-ranking).
+        let candidates: [RatingEntry]
+        if let season = season {
+            // Compare a TV season against other seasons of the same show only
+            candidates = Array(mySeasonRatings.values).filter {
+                $0.sentiment == sentiment && $0.season != season
+            }
+        } else {
+            // Compare a movie or whole TV show against same-type, non-season entries
+            candidates = existingRatings.filter { entry in
+                entry.sentiment == sentiment &&
+                entry.mediaType == mediaItem.mediaType &&
+                entry.season == nil &&
+                entry.mediaId != mediaItem.id
+            }
         }
 
-        // Sort by scoreBasic descending — lexorank not used for UI
-        let sorted = sameSentiment.sorted { $0.score > $1.score }
+        // Sort by lexorank key ascending (lower = better), fallback to score descending
+        let sorted = candidates.sorted { a, b in
+            if let ka = a.scoreV2, let kb = b.scoreV2 {
+                return LexoRank.compare(ka, kb) == .orderedAscending
+            }
+            return a.score > b.score
+        }
 
         if sorted.isEmpty {
             // No comparisons needed — first in group
@@ -169,6 +198,31 @@ class DetailsViewModel {
             currentIndex: midIdx
         )
         phase = .comparing
+
+        // Pre-fetch poster + year for comparison items in the background
+        let entriesToFetch = sorted
+        Task {
+            await prefetchComparisonMedia(entries: entriesToFetch)
+        }
+    }
+
+    func resetRatingFlow() {
+        guard phase != .done else { return }
+        phase = .initial
+        selectedSentiment = nil
+        selectedSeason = nil
+        note = ""
+        comparison = nil
+        newEntryKey = nil
+    }
+
+    private func prefetchComparisonMedia(entries: [RatingEntry]) async {
+        for entry in entries {
+            guard comparisonMediaCache[entry.mediaId] == nil else { continue }
+            if let media = try? await tmdb.fetchDetails(mediaType: entry.mediaType, id: entry.mediaId) {
+                comparisonMediaCache[entry.mediaId] = media
+            }
+        }
     }
 
     func compareChoice(preferNewItem: Bool, uid: String) {
@@ -250,9 +304,84 @@ class DetailsViewModel {
                 myRating = entry
                 if let season = selectedSeason { mySeasonRatings[season] = entry }
                 phase = .done
+                await writeActivity(entry: entry)
             } catch {
                 self.error = error.localizedDescription
             }
+        }
+    }
+
+    private func writeActivity(entry: RatingEntry) async {
+        guard let user = currentUser, let mediaItem = mediaItem else { return }
+        let mediaKey = "\(entry.mediaType.rawValue)_\(entry.mediaId)"
+        let activityId = UUID().uuidString
+
+        // If the rating has a note, create a linked discussion thread atomically.
+        // The thread and activity entry share references to each other so upvotes stay in sync.
+        let threadId: String?
+        if let note = entry.note, !note.isEmpty {
+            let tid = UUID().uuidString
+            threadId = tid
+
+            var threadData: [String: Any] = [
+                "uid": user.id,
+                "username": user.username,
+                "text": note,
+                "voteCount": 0,
+                "upvoterUids": [] as [String],
+                "replyCount": 0,
+                "createdAt": Date().timeIntervalSince1970,
+                "activityId": activityId
+            ]
+            if let score = entry.displayScore { threadData["userScore"] = score }
+            if let url = user.photoURL { threadData["photoURL"] = url }
+
+            var activityData = ActivityEntry(
+                id: activityId,
+                uid: user.id,
+                username: user.username,
+                photoURL: user.photoURL,
+                mediaId: "\(entry.mediaId)",
+                mediaType: entry.mediaType,
+                mediaName: mediaItem.title,
+                posterPath: mediaItem.posterPath,
+                sentiment: entry.sentiment,
+                note: note,
+                season: entry.season,
+                createdAt: Date(),
+                mediaKey: mediaKey,
+                threadId: tid,
+                voteCount: 0,
+                upvoterUids: [],
+                commentCount: 0
+            ).toFirestoreData()
+
+            try? await db.commit(writes: [
+                .init(kind: .set(path: "activity/\(activityId)", data: activityData)),
+                .init(kind: .set(path: "mediaDiscussions/\(mediaKey)/threads/\(tid)", data: threadData))
+            ])
+        } else {
+            threadId = nil
+            let activityData = ActivityEntry(
+                id: activityId,
+                uid: user.id,
+                username: user.username,
+                photoURL: user.photoURL,
+                mediaId: "\(entry.mediaId)",
+                mediaType: entry.mediaType,
+                mediaName: mediaItem.title,
+                posterPath: mediaItem.posterPath,
+                sentiment: entry.sentiment,
+                note: nil,
+                season: entry.season,
+                createdAt: Date(),
+                mediaKey: mediaKey,
+                threadId: nil,
+                voteCount: 0,
+                upvoterUids: [],
+                commentCount: 0
+            ).toFirestoreData()
+            try? await db.setDocument(path: "activity/\(activityId)", data: activityData)
         }
     }
 

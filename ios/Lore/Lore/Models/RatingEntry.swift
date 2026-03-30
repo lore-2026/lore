@@ -113,7 +113,7 @@ struct RatingEntry: Identifiable, Hashable, Sendable {
             mediaName: data["mediaName"] as? String,
             sentiment: sentiment,
             score: score,
-            scoreV2: data["scoreV2"] as? String,   // never read "score" string; lexorank is write-only
+            scoreV2: data["scoreV2"] as? String ?? data["score"] as? String,
             note: data["note"] as? String,
             timestamp: data["timestamp"] as? String ?? ISO8601DateFormatter().string(from: Date()),
             season: data["season"] as? Int

@@ -89,7 +89,7 @@ actor TMDBService {
     func fetchMovieDetails(id: Int) async throws -> MediaItem {
         let detail: TMDBMovieDetail = try await fetch(
             "/movie/\(id)",
-            queryItems: [URLQueryItem(name: "append_to_response", value: "credits")]
+            queryItems: [URLQueryItem(name: "append_to_response", value: "credits,release_dates")]
         )
         return detail.toMediaItem()
     }
@@ -97,7 +97,7 @@ actor TMDBService {
     func fetchTVDetails(id: Int) async throws -> MediaItem {
         let detail: TMDBTVDetail = try await fetch(
             "/tv/\(id)",
-            queryItems: [URLQueryItem(name: "append_to_response", value: "credits")]
+            queryItems: [URLQueryItem(name: "append_to_response", value: "credits,content_ratings")]
         )
         return detail.toMediaItem()
     }

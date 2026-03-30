@@ -12,6 +12,8 @@ struct DiscussionThread: Identifiable, Hashable {
     let createdAt: Date
     var userScore: Double?
 
+    var activityId: String?      // set when this thread was created from a feed activity post
+
     var replies: [ThreadReply] = []
     var isExpanded: Bool = false
 
@@ -40,18 +42,20 @@ struct DiscussionThread: Identifiable, Hashable {
         else if let s = data["userScore"] as? Int { score = Double(s) }
         else { score = nil }
 
-        return DiscussionThread(
+        var thread = DiscussionThread(
             id: id,
             uid: uid,
             username: data["username"] as? String ?? "unknown",
             photoURL: data["photoURL"] as? String,
             text: text,
             voteCount: data["voteCount"] as? Int ?? 0,
-            upvoterUids: data["upvoterUids"] as? [String] ?? [],
+            upvoterUids: (data["upvoterUids"] as? [Any])?.compactMap { $0 as? String } ?? [],
             replyCount: data["replyCount"] as? Int ?? 0,
             createdAt: createdAt,
             userScore: score
         )
+        thread.activityId = data["activityId"] as? String
+        return thread
     }
 
     func toFirestoreData(currentUser: AppUser, userScore: Double?) -> [String: Any] {

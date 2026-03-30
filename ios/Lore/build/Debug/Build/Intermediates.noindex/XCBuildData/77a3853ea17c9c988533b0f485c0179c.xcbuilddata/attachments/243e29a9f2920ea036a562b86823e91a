@@ -1,0 +1,339 @@
+{
+  "" : {
+    "diagnostics" : "/Users/alysaliu/lore/ios/Lore/build/Debug/Build/Intermediates.noindex/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/Lore-primary.dia",
+    "emit-module-dependencies" : "/Users/alysaliu/lore/ios/Lore/build/Debug/Build/Intermediates.noindex/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/Lore-primary-emit-module.d",
+    "emit-module-diagnostics" : "/Users/alysaliu/lore/ios/Lore/build/Debug/Build/Intermediates.noindex/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/Lore-primary-emit-module.dia",
+    "pch" : "/Users/alysaliu/lore/ios/Lore/build/Debug/Build/Intermediates.noindex/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/Lore-primary-Bridging-header.pch",
+    "swift-dependencies" : "/Users/alysaliu/lore/ios/Lore/build/Debug/Build/Intermediates.noindex/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/Lore-primary.swiftdeps"
+  },
+  "/Users/alysaliu/lore/ios/Lore/Lore/Config.swift" : {
+    "const-values" : "/Users/alysaliu/lore/ios/Lore/build/Debug/Build/Intermediates.noindex/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/Config.swiftconstvalues",
+    "dependencies" : "/Users/alysaliu/lore/ios/Lore/build/Debug/Build/Intermediates.noindex/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/Config.d",
+    "diagnostics" : "/Users/alysaliu/lore/ios/Lore/build/Debug/Build/Intermediates.noindex/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/Config.dia",
+    "index-unit-output-path" : "/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/Config.o",
+    "llvm-bc" : "/Users/alysaliu/lore/ios/Lore/build/Debug/Build/Intermediates.noindex/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/Config.bc",
+    "object" : "/Users/alysaliu/lore/ios/Lore/build/Debug/Build/Intermediates.noindex/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/Config.o",
+    "swift-dependencies" : "/Users/alysaliu/lore/ios/Lore/build/Debug/Build/Intermediates.noindex/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/Config.swiftdeps",
+    "swiftmodule" : "/Users/alysaliu/lore/ios/Lore/build/Debug/Build/Intermediates.noindex/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/Config~partial.swiftmodule"
+  },
+  "/Users/alysaliu/lore/ios/Lore/Lore/ContentView.swift" : {
+    "const-values" : "/Users/alysaliu/lore/ios/Lore/build/Debug/Build/Intermediates.noindex/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/ContentView.swiftconstvalues",
+    "dependencies" : "/Users/alysaliu/lore/ios/Lore/build/Debug/Build/Intermediates.noindex/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/ContentView.d",
+    "diagnostics" : "/Users/alysaliu/lore/ios/Lore/build/Debug/Build/Intermediates.noindex/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/ContentView.dia",
+    "index-unit-output-path" : "/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/ContentView.o",
+    "llvm-bc" : "/Users/alysaliu/lore/ios/Lore/build/Debug/Build/Intermediates.noindex/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/ContentView.bc",
+    "object" : "/Users/alysaliu/lore/ios/Lore/build/Debug/Build/Intermediates.noindex/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/ContentView.o",
+    "swift-dependencies" : "/Users/alysaliu/lore/ios/Lore/build/Debug/Build/Intermediates.noindex/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/ContentView.swiftdeps",
+    "swiftmodule" : "/Users/alysaliu/lore/ios/Lore/build/Debug/Build/Intermediates.noindex/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/ContentView~partial.swiftmodule"
+  },
+  "/Users/alysaliu/lore/ios/Lore/Lore/LoreApp.swift" : {
+    "const-values" : "/Users/alysaliu/lore/ios/Lore/build/Debug/Build/Intermediates.noindex/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/LoreApp.swiftconstvalues",
+    "dependencies" : "/Users/alysaliu/lore/ios/Lore/build/Debug/Build/Intermediates.noindex/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/LoreApp.d",
+    "diagnostics" : "/Users/alysaliu/lore/ios/Lore/build/Debug/Build/Intermediates.noindex/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/LoreApp.dia",
+    "index-unit-output-path" : "/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/LoreApp.o",
+    "llvm-bc" : "/Users/alysaliu/lore/ios/Lore/build/Debug/Build/Intermediates.noindex/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/LoreApp.bc",
+    "object" : "/Users/alysaliu/lore/ios/Lore/build/Debug/Build/Intermediates.noindex/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/LoreApp.o",
+    "swift-dependencies" : "/Users/alysaliu/lore/ios/Lore/build/Debug/Build/Intermediates.noindex/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/LoreApp.swiftdeps",
+    "swiftmodule" : "/Users/alysaliu/lore/ios/Lore/build/Debug/Build/Intermediates.noindex/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/LoreApp~partial.swiftmodule"
+  },
+  "/Users/alysaliu/lore/ios/Lore/Lore/Models/ActivityEntry.swift" : {
+    "const-values" : "/Users/alysaliu/lore/ios/Lore/build/Debug/Build/Intermediates.noindex/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/ActivityEntry.swiftconstvalues",
+    "dependencies" : "/Users/alysaliu/lore/ios/Lore/build/Debug/Build/Intermediates.noindex/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/ActivityEntry.d",
+    "diagnostics" : "/Users/alysaliu/lore/ios/Lore/build/Debug/Build/Intermediates.noindex/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/ActivityEntry.dia",
+    "index-unit-output-path" : "/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/ActivityEntry.o",
+    "llvm-bc" : "/Users/alysaliu/lore/ios/Lore/build/Debug/Build/Intermediates.noindex/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/ActivityEntry.bc",
+    "object" : "/Users/alysaliu/lore/ios/Lore/build/Debug/Build/Intermediates.noindex/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/ActivityEntry.o",
+    "swift-dependencies" : "/Users/alysaliu/lore/ios/Lore/build/Debug/Build/Intermediates.noindex/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/ActivityEntry.swiftdeps",
+    "swiftmodule" : "/Users/alysaliu/lore/ios/Lore/build/Debug/Build/Intermediates.noindex/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/ActivityEntry~partial.swiftmodule"
+  },
+  "/Users/alysaliu/lore/ios/Lore/Lore/Models/AppUser.swift" : {
+    "const-values" : "/Users/alysaliu/lore/ios/Lore/build/Debug/Build/Intermediates.noindex/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/AppUser.swiftconstvalues",
+    "dependencies" : "/Users/alysaliu/lore/ios/Lore/build/Debug/Build/Intermediates.noindex/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/AppUser.d",
+    "diagnostics" : "/Users/alysaliu/lore/ios/Lore/build/Debug/Build/Intermediates.noindex/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/AppUser.dia",
+    "index-unit-output-path" : "/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/AppUser.o",
+    "llvm-bc" : "/Users/alysaliu/lore/ios/Lore/build/Debug/Build/Intermediates.noindex/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/AppUser.bc",
+    "object" : "/Users/alysaliu/lore/ios/Lore/build/Debug/Build/Intermediates.noindex/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/AppUser.o",
+    "swift-dependencies" : "/Users/alysaliu/lore/ios/Lore/build/Debug/Build/Intermediates.noindex/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/AppUser.swiftdeps",
+    "swiftmodule" : "/Users/alysaliu/lore/ios/Lore/build/Debug/Build/Intermediates.noindex/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/AppUser~partial.swiftmodule"
+  },
+  "/Users/alysaliu/lore/ios/Lore/Lore/Models/CustomList.swift" : {
+    "const-values" : "/Users/alysaliu/lore/ios/Lore/build/Debug/Build/Intermediates.noindex/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/CustomList.swiftconstvalues",
+    "dependencies" : "/Users/alysaliu/lore/ios/Lore/build/Debug/Build/Intermediates.noindex/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/CustomList.d",
+    "diagnostics" : "/Users/alysaliu/lore/ios/Lore/build/Debug/Build/Intermediates.noindex/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/CustomList.dia",
+    "index-unit-output-path" : "/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/CustomList.o",
+    "llvm-bc" : "/Users/alysaliu/lore/ios/Lore/build/Debug/Build/Intermediates.noindex/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/CustomList.bc",
+    "object" : "/Users/alysaliu/lore/ios/Lore/build/Debug/Build/Intermediates.noindex/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/CustomList.o",
+    "swift-dependencies" : "/Users/alysaliu/lore/ios/Lore/build/Debug/Build/Intermediates.noindex/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/CustomList.swiftdeps",
+    "swiftmodule" : "/Users/alysaliu/lore/ios/Lore/build/Debug/Build/Intermediates.noindex/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/CustomList~partial.swiftmodule"
+  },
+  "/Users/alysaliu/lore/ios/Lore/Lore/Models/DiscussionThread.swift" : {
+    "const-values" : "/Users/alysaliu/lore/ios/Lore/build/Debug/Build/Intermediates.noindex/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/DiscussionThread.swiftconstvalues",
+    "dependencies" : "/Users/alysaliu/lore/ios/Lore/build/Debug/Build/Intermediates.noindex/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/DiscussionThread.d",
+    "diagnostics" : "/Users/alysaliu/lore/ios/Lore/build/Debug/Build/Intermediates.noindex/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/DiscussionThread.dia",
+    "index-unit-output-path" : "/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/DiscussionThread.o",
+    "llvm-bc" : "/Users/alysaliu/lore/ios/Lore/build/Debug/Build/Intermediates.noindex/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/DiscussionThread.bc",
+    "object" : "/Users/alysaliu/lore/ios/Lore/build/Debug/Build/Intermediates.noindex/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/DiscussionThread.o",
+    "swift-dependencies" : "/Users/alysaliu/lore/ios/Lore/build/Debug/Build/Intermediates.noindex/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/DiscussionThread.swiftdeps",
+    "swiftmodule" : "/Users/alysaliu/lore/ios/Lore/build/Debug/Build/Intermediates.noindex/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/DiscussionThread~partial.swiftmodule"
+  },
+  "/Users/alysaliu/lore/ios/Lore/Lore/Models/MediaItem.swift" : {
+    "const-values" : "/Users/alysaliu/lore/ios/Lore/build/Debug/Build/Intermediates.noindex/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/MediaItem.swiftconstvalues",
+    "dependencies" : "/Users/alysaliu/lore/ios/Lore/build/Debug/Build/Intermediates.noindex/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/MediaItem.d",
+    "diagnostics" : "/Users/alysaliu/lore/ios/Lore/build/Debug/Build/Intermediates.noindex/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/MediaItem.dia",
+    "index-unit-output-path" : "/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/MediaItem.o",
+    "llvm-bc" : "/Users/alysaliu/lore/ios/Lore/build/Debug/Build/Intermediates.noindex/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/MediaItem.bc",
+    "object" : "/Users/alysaliu/lore/ios/Lore/build/Debug/Build/Intermediates.noindex/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/MediaItem.o",
+    "swift-dependencies" : "/Users/alysaliu/lore/ios/Lore/build/Debug/Build/Intermediates.noindex/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/MediaItem.swiftdeps",
+    "swiftmodule" : "/Users/alysaliu/lore/ios/Lore/build/Debug/Build/Intermediates.noindex/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/MediaItem~partial.swiftmodule"
+  },
+  "/Users/alysaliu/lore/ios/Lore/Lore/Models/RatingEntry.swift" : {
+    "const-values" : "/Users/alysaliu/lore/ios/Lore/build/Debug/Build/Intermediates.noindex/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/RatingEntry.swiftconstvalues",
+    "dependencies" : "/Users/alysaliu/lore/ios/Lore/build/Debug/Build/Intermediates.noindex/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/RatingEntry.d",
+    "diagnostics" : "/Users/alysaliu/lore/ios/Lore/build/Debug/Build/Intermediates.noindex/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/RatingEntry.dia",
+    "index-unit-output-path" : "/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/RatingEntry.o",
+    "llvm-bc" : "/Users/alysaliu/lore/ios/Lore/build/Debug/Build/Intermediates.noindex/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/RatingEntry.bc",
+    "object" : "/Users/alysaliu/lore/ios/Lore/build/Debug/Build/Intermediates.noindex/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/RatingEntry.o",
+    "swift-dependencies" : "/Users/alysaliu/lore/ios/Lore/build/Debug/Build/Intermediates.noindex/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/RatingEntry.swiftdeps",
+    "swiftmodule" : "/Users/alysaliu/lore/ios/Lore/build/Debug/Build/Intermediates.noindex/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/RatingEntry~partial.swiftmodule"
+  },
+  "/Users/alysaliu/lore/ios/Lore/Lore/Services/AuthService.swift" : {
+    "const-values" : "/Users/alysaliu/lore/ios/Lore/build/Debug/Build/Intermediates.noindex/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/AuthService.swiftconstvalues",
+    "dependencies" : "/Users/alysaliu/lore/ios/Lore/build/Debug/Build/Intermediates.noindex/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/AuthService.d",
+    "diagnostics" : "/Users/alysaliu/lore/ios/Lore/build/Debug/Build/Intermediates.noindex/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/AuthService.dia",
+    "index-unit-output-path" : "/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/AuthService.o",
+    "llvm-bc" : "/Users/alysaliu/lore/ios/Lore/build/Debug/Build/Intermediates.noindex/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/AuthService.bc",
+    "object" : "/Users/alysaliu/lore/ios/Lore/build/Debug/Build/Intermediates.noindex/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/AuthService.o",
+    "swift-dependencies" : "/Users/alysaliu/lore/ios/Lore/build/Debug/Build/Intermediates.noindex/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/AuthService.swiftdeps",
+    "swiftmodule" : "/Users/alysaliu/lore/ios/Lore/build/Debug/Build/Intermediates.noindex/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/AuthService~partial.swiftmodule"
+  },
+  "/Users/alysaliu/lore/ios/Lore/Lore/Services/FirestoreService.swift" : {
+    "const-values" : "/Users/alysaliu/lore/ios/Lore/build/Debug/Build/Intermediates.noindex/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/FirestoreService.swiftconstvalues",
+    "dependencies" : "/Users/alysaliu/lore/ios/Lore/build/Debug/Build/Intermediates.noindex/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/FirestoreService.d",
+    "diagnostics" : "/Users/alysaliu/lore/ios/Lore/build/Debug/Build/Intermediates.noindex/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/FirestoreService.dia",
+    "index-unit-output-path" : "/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/FirestoreService.o",
+    "llvm-bc" : "/Users/alysaliu/lore/ios/Lore/build/Debug/Build/Intermediates.noindex/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/FirestoreService.bc",
+    "object" : "/Users/alysaliu/lore/ios/Lore/build/Debug/Build/Intermediates.noindex/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/FirestoreService.o",
+    "swift-dependencies" : "/Users/alysaliu/lore/ios/Lore/build/Debug/Build/Intermediates.noindex/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/FirestoreService.swiftdeps",
+    "swiftmodule" : "/Users/alysaliu/lore/ios/Lore/build/Debug/Build/Intermediates.noindex/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/FirestoreService~partial.swiftmodule"
+  },
+  "/Users/alysaliu/lore/ios/Lore/Lore/Services/RatingsEngine.swift" : {
+    "const-values" : "/Users/alysaliu/lore/ios/Lore/build/Debug/Build/Intermediates.noindex/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/RatingsEngine.swiftconstvalues",
+    "dependencies" : "/Users/alysaliu/lore/ios/Lore/build/Debug/Build/Intermediates.noindex/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/RatingsEngine.d",
+    "diagnostics" : "/Users/alysaliu/lore/ios/Lore/build/Debug/Build/Intermediates.noindex/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/RatingsEngine.dia",
+    "index-unit-output-path" : "/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/RatingsEngine.o",
+    "llvm-bc" : "/Users/alysaliu/lore/ios/Lore/build/Debug/Build/Intermediates.noindex/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/RatingsEngine.bc",
+    "object" : "/Users/alysaliu/lore/ios/Lore/build/Debug/Build/Intermediates.noindex/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/RatingsEngine.o",
+    "swift-dependencies" : "/Users/alysaliu/lore/ios/Lore/build/Debug/Build/Intermediates.noindex/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/RatingsEngine.swiftdeps",
+    "swiftmodule" : "/Users/alysaliu/lore/ios/Lore/build/Debug/Build/Intermediates.noindex/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/RatingsEngine~partial.swiftmodule"
+  },
+  "/Users/alysaliu/lore/ios/Lore/Lore/Services/TMDBService.swift" : {
+    "const-values" : "/Users/alysaliu/lore/ios/Lore/build/Debug/Build/Intermediates.noindex/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/TMDBService.swiftconstvalues",
+    "dependencies" : "/Users/alysaliu/lore/ios/Lore/build/Debug/Build/Intermediates.noindex/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/TMDBService.d",
+    "diagnostics" : "/Users/alysaliu/lore/ios/Lore/build/Debug/Build/Intermediates.noindex/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/TMDBService.dia",
+    "index-unit-output-path" : "/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/TMDBService.o",
+    "llvm-bc" : "/Users/alysaliu/lore/ios/Lore/build/Debug/Build/Intermediates.noindex/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/TMDBService.bc",
+    "object" : "/Users/alysaliu/lore/ios/Lore/build/Debug/Build/Intermediates.noindex/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/TMDBService.o",
+    "swift-dependencies" : "/Users/alysaliu/lore/ios/Lore/build/Debug/Build/Intermediates.noindex/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/TMDBService.swiftdeps",
+    "swiftmodule" : "/Users/alysaliu/lore/ios/Lore/build/Debug/Build/Intermediates.noindex/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/TMDBService~partial.swiftmodule"
+  },
+  "/Users/alysaliu/lore/ios/Lore/Lore/ViewModels/AuthViewModel.swift" : {
+    "const-values" : "/Users/alysaliu/lore/ios/Lore/build/Debug/Build/Intermediates.noindex/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/AuthViewModel.swiftconstvalues",
+    "dependencies" : "/Users/alysaliu/lore/ios/Lore/build/Debug/Build/Intermediates.noindex/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/AuthViewModel.d",
+    "diagnostics" : "/Users/alysaliu/lore/ios/Lore/build/Debug/Build/Intermediates.noindex/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/AuthViewModel.dia",
+    "index-unit-output-path" : "/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/AuthViewModel.o",
+    "llvm-bc" : "/Users/alysaliu/lore/ios/Lore/build/Debug/Build/Intermediates.noindex/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/AuthViewModel.bc",
+    "object" : "/Users/alysaliu/lore/ios/Lore/build/Debug/Build/Intermediates.noindex/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/AuthViewModel.o",
+    "swift-dependencies" : "/Users/alysaliu/lore/ios/Lore/build/Debug/Build/Intermediates.noindex/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/AuthViewModel.swiftdeps",
+    "swiftmodule" : "/Users/alysaliu/lore/ios/Lore/build/Debug/Build/Intermediates.noindex/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/AuthViewModel~partial.swiftmodule"
+  },
+  "/Users/alysaliu/lore/ios/Lore/Lore/ViewModels/DetailsViewModel.swift" : {
+    "const-values" : "/Users/alysaliu/lore/ios/Lore/build/Debug/Build/Intermediates.noindex/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/DetailsViewModel.swiftconstvalues",
+    "dependencies" : "/Users/alysaliu/lore/ios/Lore/build/Debug/Build/Intermediates.noindex/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/DetailsViewModel.d",
+    "diagnostics" : "/Users/alysaliu/lore/ios/Lore/build/Debug/Build/Intermediates.noindex/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/DetailsViewModel.dia",
+    "index-unit-output-path" : "/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/DetailsViewModel.o",
+    "llvm-bc" : "/Users/alysaliu/lore/ios/Lore/build/Debug/Build/Intermediates.noindex/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/DetailsViewModel.bc",
+    "object" : "/Users/alysaliu/lore/ios/Lore/build/Debug/Build/Intermediates.noindex/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/DetailsViewModel.o",
+    "swift-dependencies" : "/Users/alysaliu/lore/ios/Lore/build/Debug/Build/Intermediates.noindex/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/DetailsViewModel.swiftdeps",
+    "swiftmodule" : "/Users/alysaliu/lore/ios/Lore/build/Debug/Build/Intermediates.noindex/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/DetailsViewModel~partial.swiftmodule"
+  },
+  "/Users/alysaliu/lore/ios/Lore/Lore/ViewModels/ExploreViewModel.swift" : {
+    "const-values" : "/Users/alysaliu/lore/ios/Lore/build/Debug/Build/Intermediates.noindex/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/ExploreViewModel.swiftconstvalues",
+    "dependencies" : "/Users/alysaliu/lore/ios/Lore/build/Debug/Build/Intermediates.noindex/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/ExploreViewModel.d",
+    "diagnostics" : "/Users/alysaliu/lore/ios/Lore/build/Debug/Build/Intermediates.noindex/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/ExploreViewModel.dia",
+    "index-unit-output-path" : "/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/ExploreViewModel.o",
+    "llvm-bc" : "/Users/alysaliu/lore/ios/Lore/build/Debug/Build/Intermediates.noindex/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/ExploreViewModel.bc",
+    "object" : "/Users/alysaliu/lore/ios/Lore/build/Debug/Build/Intermediates.noindex/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/ExploreViewModel.o",
+    "swift-dependencies" : "/Users/alysaliu/lore/ios/Lore/build/Debug/Build/Intermediates.noindex/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/ExploreViewModel.swiftdeps",
+    "swiftmodule" : "/Users/alysaliu/lore/ios/Lore/build/Debug/Build/Intermediates.noindex/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/ExploreViewModel~partial.swiftmodule"
+  },
+  "/Users/alysaliu/lore/ios/Lore/Lore/ViewModels/HomeViewModel.swift" : {
+    "const-values" : "/Users/alysaliu/lore/ios/Lore/build/Debug/Build/Intermediates.noindex/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/HomeViewModel.swiftconstvalues",
+    "dependencies" : "/Users/alysaliu/lore/ios/Lore/build/Debug/Build/Intermediates.noindex/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/HomeViewModel.d",
+    "diagnostics" : "/Users/alysaliu/lore/ios/Lore/build/Debug/Build/Intermediates.noindex/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/HomeViewModel.dia",
+    "index-unit-output-path" : "/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/HomeViewModel.o",
+    "llvm-bc" : "/Users/alysaliu/lore/ios/Lore/build/Debug/Build/Intermediates.noindex/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/HomeViewModel.bc",
+    "object" : "/Users/alysaliu/lore/ios/Lore/build/Debug/Build/Intermediates.noindex/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/HomeViewModel.o",
+    "swift-dependencies" : "/Users/alysaliu/lore/ios/Lore/build/Debug/Build/Intermediates.noindex/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/HomeViewModel.swiftdeps",
+    "swiftmodule" : "/Users/alysaliu/lore/ios/Lore/build/Debug/Build/Intermediates.noindex/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/HomeViewModel~partial.swiftmodule"
+  },
+  "/Users/alysaliu/lore/ios/Lore/Lore/ViewModels/ProfileViewModel.swift" : {
+    "const-values" : "/Users/alysaliu/lore/ios/Lore/build/Debug/Build/Intermediates.noindex/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/ProfileViewModel.swiftconstvalues",
+    "dependencies" : "/Users/alysaliu/lore/ios/Lore/build/Debug/Build/Intermediates.noindex/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/ProfileViewModel.d",
+    "diagnostics" : "/Users/alysaliu/lore/ios/Lore/build/Debug/Build/Intermediates.noindex/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/ProfileViewModel.dia",
+    "index-unit-output-path" : "/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/ProfileViewModel.o",
+    "llvm-bc" : "/Users/alysaliu/lore/ios/Lore/build/Debug/Build/Intermediates.noindex/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/ProfileViewModel.bc",
+    "object" : "/Users/alysaliu/lore/ios/Lore/build/Debug/Build/Intermediates.noindex/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/ProfileViewModel.o",
+    "swift-dependencies" : "/Users/alysaliu/lore/ios/Lore/build/Debug/Build/Intermediates.noindex/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/ProfileViewModel.swiftdeps",
+    "swiftmodule" : "/Users/alysaliu/lore/ios/Lore/build/Debug/Build/Intermediates.noindex/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/ProfileViewModel~partial.swiftmodule"
+  },
+  "/Users/alysaliu/lore/ios/Lore/Lore/Views/Components/ActivityCardView.swift" : {
+    "const-values" : "/Users/alysaliu/lore/ios/Lore/build/Debug/Build/Intermediates.noindex/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/ActivityCardView.swiftconstvalues",
+    "dependencies" : "/Users/alysaliu/lore/ios/Lore/build/Debug/Build/Intermediates.noindex/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/ActivityCardView.d",
+    "diagnostics" : "/Users/alysaliu/lore/ios/Lore/build/Debug/Build/Intermediates.noindex/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/ActivityCardView.dia",
+    "index-unit-output-path" : "/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/ActivityCardView.o",
+    "llvm-bc" : "/Users/alysaliu/lore/ios/Lore/build/Debug/Build/Intermediates.noindex/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/ActivityCardView.bc",
+    "object" : "/Users/alysaliu/lore/ios/Lore/build/Debug/Build/Intermediates.noindex/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/ActivityCardView.o",
+    "swift-dependencies" : "/Users/alysaliu/lore/ios/Lore/build/Debug/Build/Intermediates.noindex/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/ActivityCardView.swiftdeps",
+    "swiftmodule" : "/Users/alysaliu/lore/ios/Lore/build/Debug/Build/Intermediates.noindex/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/ActivityCardView~partial.swiftmodule"
+  },
+  "/Users/alysaliu/lore/ios/Lore/Lore/Views/Components/DiscussionSectionView.swift" : {
+    "const-values" : "/Users/alysaliu/lore/ios/Lore/build/Debug/Build/Intermediates.noindex/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/DiscussionSectionView.swiftconstvalues",
+    "dependencies" : "/Users/alysaliu/lore/ios/Lore/build/Debug/Build/Intermediates.noindex/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/DiscussionSectionView.d",
+    "diagnostics" : "/Users/alysaliu/lore/ios/Lore/build/Debug/Build/Intermediates.noindex/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/DiscussionSectionView.dia",
+    "index-unit-output-path" : "/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/DiscussionSectionView.o",
+    "llvm-bc" : "/Users/alysaliu/lore/ios/Lore/build/Debug/Build/Intermediates.noindex/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/DiscussionSectionView.bc",
+    "object" : "/Users/alysaliu/lore/ios/Lore/build/Debug/Build/Intermediates.noindex/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/DiscussionSectionView.o",
+    "swift-dependencies" : "/Users/alysaliu/lore/ios/Lore/build/Debug/Build/Intermediates.noindex/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/DiscussionSectionView.swiftdeps",
+    "swiftmodule" : "/Users/alysaliu/lore/ios/Lore/build/Debug/Build/Intermediates.noindex/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/DiscussionSectionView~partial.swiftmodule"
+  },
+  "/Users/alysaliu/lore/ios/Lore/Lore/Views/Components/MediaCardView.swift" : {
+    "const-values" : "/Users/alysaliu/lore/ios/Lore/build/Debug/Build/Intermediates.noindex/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/MediaCardView.swiftconstvalues",
+    "dependencies" : "/Users/alysaliu/lore/ios/Lore/build/Debug/Build/Intermediates.noindex/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/MediaCardView.d",
+    "diagnostics" : "/Users/alysaliu/lore/ios/Lore/build/Debug/Build/Intermediates.noindex/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/MediaCardView.dia",
+    "index-unit-output-path" : "/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/MediaCardView.o",
+    "llvm-bc" : "/Users/alysaliu/lore/ios/Lore/build/Debug/Build/Intermediates.noindex/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/MediaCardView.bc",
+    "object" : "/Users/alysaliu/lore/ios/Lore/build/Debug/Build/Intermediates.noindex/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/MediaCardView.o",
+    "swift-dependencies" : "/Users/alysaliu/lore/ios/Lore/build/Debug/Build/Intermediates.noindex/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/MediaCardView.swiftdeps",
+    "swiftmodule" : "/Users/alysaliu/lore/ios/Lore/build/Debug/Build/Intermediates.noindex/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/MediaCardView~partial.swiftmodule"
+  },
+  "/Users/alysaliu/lore/ios/Lore/Lore/Views/DetailsView.swift" : {
+    "const-values" : "/Users/alysaliu/lore/ios/Lore/build/Debug/Build/Intermediates.noindex/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/DetailsView.swiftconstvalues",
+    "dependencies" : "/Users/alysaliu/lore/ios/Lore/build/Debug/Build/Intermediates.noindex/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/DetailsView.d",
+    "diagnostics" : "/Users/alysaliu/lore/ios/Lore/build/Debug/Build/Intermediates.noindex/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/DetailsView.dia",
+    "index-unit-output-path" : "/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/DetailsView.o",
+    "llvm-bc" : "/Users/alysaliu/lore/ios/Lore/build/Debug/Build/Intermediates.noindex/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/DetailsView.bc",
+    "object" : "/Users/alysaliu/lore/ios/Lore/build/Debug/Build/Intermediates.noindex/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/DetailsView.o",
+    "swift-dependencies" : "/Users/alysaliu/lore/ios/Lore/build/Debug/Build/Intermediates.noindex/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/DetailsView.swiftdeps",
+    "swiftmodule" : "/Users/alysaliu/lore/ios/Lore/build/Debug/Build/Intermediates.noindex/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/DetailsView~partial.swiftmodule"
+  },
+  "/Users/alysaliu/lore/ios/Lore/Lore/Views/ExploreView.swift" : {
+    "const-values" : "/Users/alysaliu/lore/ios/Lore/build/Debug/Build/Intermediates.noindex/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/ExploreView.swiftconstvalues",
+    "dependencies" : "/Users/alysaliu/lore/ios/Lore/build/Debug/Build/Intermediates.noindex/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/ExploreView.d",
+    "diagnostics" : "/Users/alysaliu/lore/ios/Lore/build/Debug/Build/Intermediates.noindex/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/ExploreView.dia",
+    "index-unit-output-path" : "/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/ExploreView.o",
+    "llvm-bc" : "/Users/alysaliu/lore/ios/Lore/build/Debug/Build/Intermediates.noindex/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/ExploreView.bc",
+    "object" : "/Users/alysaliu/lore/ios/Lore/build/Debug/Build/Intermediates.noindex/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/ExploreView.o",
+    "swift-dependencies" : "/Users/alysaliu/lore/ios/Lore/build/Debug/Build/Intermediates.noindex/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/ExploreView.swiftdeps",
+    "swiftmodule" : "/Users/alysaliu/lore/ios/Lore/build/Debug/Build/Intermediates.noindex/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/ExploreView~partial.swiftmodule"
+  },
+  "/Users/alysaliu/lore/ios/Lore/Lore/Views/HomeView.swift" : {
+    "const-values" : "/Users/alysaliu/lore/ios/Lore/build/Debug/Build/Intermediates.noindex/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/HomeView.swiftconstvalues",
+    "dependencies" : "/Users/alysaliu/lore/ios/Lore/build/Debug/Build/Intermediates.noindex/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/HomeView.d",
+    "diagnostics" : "/Users/alysaliu/lore/ios/Lore/build/Debug/Build/Intermediates.noindex/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/HomeView.dia",
+    "index-unit-output-path" : "/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/HomeView.o",
+    "llvm-bc" : "/Users/alysaliu/lore/ios/Lore/build/Debug/Build/Intermediates.noindex/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/HomeView.bc",
+    "object" : "/Users/alysaliu/lore/ios/Lore/build/Debug/Build/Intermediates.noindex/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/HomeView.o",
+    "swift-dependencies" : "/Users/alysaliu/lore/ios/Lore/build/Debug/Build/Intermediates.noindex/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/HomeView.swiftdeps",
+    "swiftmodule" : "/Users/alysaliu/lore/ios/Lore/build/Debug/Build/Intermediates.noindex/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/HomeView~partial.swiftmodule"
+  },
+  "/Users/alysaliu/lore/ios/Lore/Lore/Views/ListDetailView.swift" : {
+    "const-values" : "/Users/alysaliu/lore/ios/Lore/build/Debug/Build/Intermediates.noindex/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/ListDetailView.swiftconstvalues",
+    "dependencies" : "/Users/alysaliu/lore/ios/Lore/build/Debug/Build/Intermediates.noindex/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/ListDetailView.d",
+    "diagnostics" : "/Users/alysaliu/lore/ios/Lore/build/Debug/Build/Intermediates.noindex/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/ListDetailView.dia",
+    "index-unit-output-path" : "/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/ListDetailView.o",
+    "llvm-bc" : "/Users/alysaliu/lore/ios/Lore/build/Debug/Build/Intermediates.noindex/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/ListDetailView.bc",
+    "object" : "/Users/alysaliu/lore/ios/Lore/build/Debug/Build/Intermediates.noindex/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/ListDetailView.o",
+    "swift-dependencies" : "/Users/alysaliu/lore/ios/Lore/build/Debug/Build/Intermediates.noindex/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/ListDetailView.swiftdeps",
+    "swiftmodule" : "/Users/alysaliu/lore/ios/Lore/build/Debug/Build/Intermediates.noindex/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/ListDetailView~partial.swiftmodule"
+  },
+  "/Users/alysaliu/lore/ios/Lore/Lore/Views/LoginView.swift" : {
+    "const-values" : "/Users/alysaliu/lore/ios/Lore/build/Debug/Build/Intermediates.noindex/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/LoginView.swiftconstvalues",
+    "dependencies" : "/Users/alysaliu/lore/ios/Lore/build/Debug/Build/Intermediates.noindex/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/LoginView.d",
+    "diagnostics" : "/Users/alysaliu/lore/ios/Lore/build/Debug/Build/Intermediates.noindex/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/LoginView.dia",
+    "index-unit-output-path" : "/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/LoginView.o",
+    "llvm-bc" : "/Users/alysaliu/lore/ios/Lore/build/Debug/Build/Intermediates.noindex/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/LoginView.bc",
+    "object" : "/Users/alysaliu/lore/ios/Lore/build/Debug/Build/Intermediates.noindex/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/LoginView.o",
+    "swift-dependencies" : "/Users/alysaliu/lore/ios/Lore/build/Debug/Build/Intermediates.noindex/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/LoginView.swiftdeps",
+    "swiftmodule" : "/Users/alysaliu/lore/ios/Lore/build/Debug/Build/Intermediates.noindex/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/LoginView~partial.swiftmodule"
+  },
+  "/Users/alysaliu/lore/ios/Lore/Lore/Views/MainTabView.swift" : {
+    "const-values" : "/Users/alysaliu/lore/ios/Lore/build/Debug/Build/Intermediates.noindex/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/MainTabView.swiftconstvalues",
+    "dependencies" : "/Users/alysaliu/lore/ios/Lore/build/Debug/Build/Intermediates.noindex/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/MainTabView.d",
+    "diagnostics" : "/Users/alysaliu/lore/ios/Lore/build/Debug/Build/Intermediates.noindex/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/MainTabView.dia",
+    "index-unit-output-path" : "/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/MainTabView.o",
+    "llvm-bc" : "/Users/alysaliu/lore/ios/Lore/build/Debug/Build/Intermediates.noindex/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/MainTabView.bc",
+    "object" : "/Users/alysaliu/lore/ios/Lore/build/Debug/Build/Intermediates.noindex/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/MainTabView.o",
+    "swift-dependencies" : "/Users/alysaliu/lore/ios/Lore/build/Debug/Build/Intermediates.noindex/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/MainTabView.swiftdeps",
+    "swiftmodule" : "/Users/alysaliu/lore/ios/Lore/build/Debug/Build/Intermediates.noindex/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/MainTabView~partial.swiftmodule"
+  },
+  "/Users/alysaliu/lore/ios/Lore/Lore/Views/OnboardingView.swift" : {
+    "const-values" : "/Users/alysaliu/lore/ios/Lore/build/Debug/Build/Intermediates.noindex/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/OnboardingView.swiftconstvalues",
+    "dependencies" : "/Users/alysaliu/lore/ios/Lore/build/Debug/Build/Intermediates.noindex/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/OnboardingView.d",
+    "diagnostics" : "/Users/alysaliu/lore/ios/Lore/build/Debug/Build/Intermediates.noindex/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/OnboardingView.dia",
+    "index-unit-output-path" : "/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/OnboardingView.o",
+    "llvm-bc" : "/Users/alysaliu/lore/ios/Lore/build/Debug/Build/Intermediates.noindex/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/OnboardingView.bc",
+    "object" : "/Users/alysaliu/lore/ios/Lore/build/Debug/Build/Intermediates.noindex/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/OnboardingView.o",
+    "swift-dependencies" : "/Users/alysaliu/lore/ios/Lore/build/Debug/Build/Intermediates.noindex/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/OnboardingView.swiftdeps",
+    "swiftmodule" : "/Users/alysaliu/lore/ios/Lore/build/Debug/Build/Intermediates.noindex/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/OnboardingView~partial.swiftmodule"
+  },
+  "/Users/alysaliu/lore/ios/Lore/Lore/Views/ProfileView.swift" : {
+    "const-values" : "/Users/alysaliu/lore/ios/Lore/build/Debug/Build/Intermediates.noindex/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/ProfileView.swiftconstvalues",
+    "dependencies" : "/Users/alysaliu/lore/ios/Lore/build/Debug/Build/Intermediates.noindex/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/ProfileView.d",
+    "diagnostics" : "/Users/alysaliu/lore/ios/Lore/build/Debug/Build/Intermediates.noindex/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/ProfileView.dia",
+    "index-unit-output-path" : "/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/ProfileView.o",
+    "llvm-bc" : "/Users/alysaliu/lore/ios/Lore/build/Debug/Build/Intermediates.noindex/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/ProfileView.bc",
+    "object" : "/Users/alysaliu/lore/ios/Lore/build/Debug/Build/Intermediates.noindex/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/ProfileView.o",
+    "swift-dependencies" : "/Users/alysaliu/lore/ios/Lore/build/Debug/Build/Intermediates.noindex/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/ProfileView.swiftdeps",
+    "swiftmodule" : "/Users/alysaliu/lore/ios/Lore/build/Debug/Build/Intermediates.noindex/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/ProfileView~partial.swiftmodule"
+  },
+  "/Users/alysaliu/lore/ios/Lore/Lore/Views/RatingFlowView.swift" : {
+    "const-values" : "/Users/alysaliu/lore/ios/Lore/build/Debug/Build/Intermediates.noindex/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/RatingFlowView.swiftconstvalues",
+    "dependencies" : "/Users/alysaliu/lore/ios/Lore/build/Debug/Build/Intermediates.noindex/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/RatingFlowView.d",
+    "diagnostics" : "/Users/alysaliu/lore/ios/Lore/build/Debug/Build/Intermediates.noindex/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/RatingFlowView.dia",
+    "index-unit-output-path" : "/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/RatingFlowView.o",
+    "llvm-bc" : "/Users/alysaliu/lore/ios/Lore/build/Debug/Build/Intermediates.noindex/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/RatingFlowView.bc",
+    "object" : "/Users/alysaliu/lore/ios/Lore/build/Debug/Build/Intermediates.noindex/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/RatingFlowView.o",
+    "swift-dependencies" : "/Users/alysaliu/lore/ios/Lore/build/Debug/Build/Intermediates.noindex/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/RatingFlowView.swiftdeps",
+    "swiftmodule" : "/Users/alysaliu/lore/ios/Lore/build/Debug/Build/Intermediates.noindex/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/RatingFlowView~partial.swiftmodule"
+  },
+  "/Users/alysaliu/lore/ios/Lore/Lore/Views/RootView.swift" : {
+    "const-values" : "/Users/alysaliu/lore/ios/Lore/build/Debug/Build/Intermediates.noindex/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/RootView.swiftconstvalues",
+    "dependencies" : "/Users/alysaliu/lore/ios/Lore/build/Debug/Build/Intermediates.noindex/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/RootView.d",
+    "diagnostics" : "/Users/alysaliu/lore/ios/Lore/build/Debug/Build/Intermediates.noindex/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/RootView.dia",
+    "index-unit-output-path" : "/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/RootView.o",
+    "llvm-bc" : "/Users/alysaliu/lore/ios/Lore/build/Debug/Build/Intermediates.noindex/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/RootView.bc",
+    "object" : "/Users/alysaliu/lore/ios/Lore/build/Debug/Build/Intermediates.noindex/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/RootView.o",
+    "swift-dependencies" : "/Users/alysaliu/lore/ios/Lore/build/Debug/Build/Intermediates.noindex/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/RootView.swiftdeps",
+    "swiftmodule" : "/Users/alysaliu/lore/ios/Lore/build/Debug/Build/Intermediates.noindex/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/RootView~partial.swiftmodule"
+  },
+  "/Users/alysaliu/lore/ios/Lore/Lore/Views/SettingsView.swift" : {
+    "const-values" : "/Users/alysaliu/lore/ios/Lore/build/Debug/Build/Intermediates.noindex/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/SettingsView.swiftconstvalues",
+    "dependencies" : "/Users/alysaliu/lore/ios/Lore/build/Debug/Build/Intermediates.noindex/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/SettingsView.d",
+    "diagnostics" : "/Users/alysaliu/lore/ios/Lore/build/Debug/Build/Intermediates.noindex/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/SettingsView.dia",
+    "index-unit-output-path" : "/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/SettingsView.o",
+    "llvm-bc" : "/Users/alysaliu/lore/ios/Lore/build/Debug/Build/Intermediates.noindex/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/SettingsView.bc",
+    "object" : "/Users/alysaliu/lore/ios/Lore/build/Debug/Build/Intermediates.noindex/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/SettingsView.o",
+    "swift-dependencies" : "/Users/alysaliu/lore/ios/Lore/build/Debug/Build/Intermediates.noindex/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/SettingsView.swiftdeps",
+    "swiftmodule" : "/Users/alysaliu/lore/ios/Lore/build/Debug/Build/Intermediates.noindex/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/SettingsView~partial.swiftmodule"
+  },
+  "/Users/alysaliu/lore/ios/Lore/build/Debug/Build/Intermediates.noindex/Lore.build/Debug-iphoneos/Lore.build/DerivedSources/GeneratedAssetSymbols.swift" : {
+    "const-values" : "/Users/alysaliu/lore/ios/Lore/build/Debug/Build/Intermediates.noindex/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/GeneratedAssetSymbols.swiftconstvalues",
+    "dependencies" : "/Users/alysaliu/lore/ios/Lore/build/Debug/Build/Intermediates.noindex/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/GeneratedAssetSymbols.d",
+    "diagnostics" : "/Users/alysaliu/lore/ios/Lore/build/Debug/Build/Intermediates.noindex/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/GeneratedAssetSymbols.dia",
+    "index-unit-output-path" : "/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/GeneratedAssetSymbols.o",
+    "llvm-bc" : "/Users/alysaliu/lore/ios/Lore/build/Debug/Build/Intermediates.noindex/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/GeneratedAssetSymbols.bc",
+    "object" : "/Users/alysaliu/lore/ios/Lore/build/Debug/Build/Intermediates.noindex/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/GeneratedAssetSymbols.o",
+    "swift-dependencies" : "/Users/alysaliu/lore/ios/Lore/build/Debug/Build/Intermediates.noindex/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/GeneratedAssetSymbols.swiftdeps",
+    "swiftmodule" : "/Users/alysaliu/lore/ios/Lore/build/Debug/Build/Intermediates.noindex/Lore.build/Debug-iphoneos/Lore.build/Objects-normal/arm64/GeneratedAssetSymbols~partial.swiftmodule"
+  }
+}

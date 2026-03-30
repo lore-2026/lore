@@ -28,11 +28,18 @@ struct MediaItem: Identifiable, Codable, Hashable, Sendable {
     let numberOfSeasons: Int?
     let seasons: [TvSeason]?
     let cast: [CastMember]?
+    let certification: String?
+    let backdropPath: String?
 
     func posterUrl(size: String = "w342") -> String {
         guard let path = posterPath else {
             return "placeholder"
         }
+        return "\(Config.tmdbImageBase)/\(size)\(path)"
+    }
+
+    func backdropUrl(size: String = "w780") -> String? {
+        guard let path = backdropPath else { return nil }
         return "\(Config.tmdbImageBase)/\(size)\(path)"
     }
 }
@@ -120,7 +127,9 @@ struct TMDBSearchResult: Decodable, Identifiable, Sendable {
             runtime: nil,
             numberOfSeasons: nil,
             seasons: nil,
-            cast: nil
+            cast: nil,
+            certification: nil,
+            backdropPath: nil
         )
     }
 }
@@ -130,15 +139,27 @@ struct TMDBMovieDetail: Decodable, Sendable {
     let title: String
     let overview: String
     let posterPath: String?
+    let backdropPath: String?
     let releaseDate: String?
     let runtime: Int?
     let genres: [TMDBGenre]
     let credits: TMDBCredits?
+    let releaseDates: TMDBReleaseDatesWrapper?
 
     enum CodingKeys: String, CodingKey {
         case id, title, overview, runtime, genres, credits
         case posterPath = "poster_path"
+        case backdropPath = "backdrop_path"
         case releaseDate = "release_date"
+        case releaseDates = "release_dates"
+    }
+
+    var usCertification: String? {
+        releaseDates?.results
+            .first { $0.iso31661 == "US" }?
+            .releaseDates
+            .compactMap { $0.certification.isEmpty ? nil : $0.certification }
+            .first
     }
 
     func toMediaItem() -> MediaItem {
@@ -153,7 +174,9 @@ struct TMDBMovieDetail: Decodable, Sendable {
             runtime: runtime,
             numberOfSeasons: nil,
             seasons: nil,
-            cast: credits?.cast.prefix(10).map { $0 }
+            cast: credits?.cast.prefix(10).map { $0 },
+            certification: usCertification,
+            backdropPath: backdropPath
         )
     }
 }
@@ -163,17 +186,27 @@ struct TMDBTVDetail: Decodable, Sendable {
     let name: String
     let overview: String
     let posterPath: String?
+    let backdropPath: String?
     let firstAirDate: String?
     let numberOfSeasons: Int?
     let seasons: [TvSeason]?
     let genres: [TMDBGenre]
     let credits: TMDBCredits?
+    let contentRatings: TMDBContentRatingsWrapper?
 
     enum CodingKeys: String, CodingKey {
         case id, name, overview, genres, credits, seasons
         case posterPath = "poster_path"
+        case backdropPath = "backdrop_path"
         case firstAirDate = "first_air_date"
         case numberOfSeasons = "number_of_seasons"
+        case contentRatings = "content_ratings"
+    }
+
+    var usCertification: String? {
+        contentRatings?.results
+            .first { $0.iso31661 == "US" }
+            .flatMap { $0.rating.isEmpty ? nil : $0.rating }
     }
 
     func toMediaItem() -> MediaItem {
@@ -188,7 +221,9 @@ struct TMDBTVDetail: Decodable, Sendable {
             runtime: nil,
             numberOfSeasons: numberOfSeasons,
             seasons: seasons?.filter { $0.seasonNumber > 0 },
-            cast: credits?.cast.prefix(10).map { $0 }
+            cast: credits?.cast.prefix(10).map { $0 },
+            certification: usCertification,
+            backdropPath: backdropPath
         )
     }
 }
@@ -244,7 +279,43 @@ struct TMDBTrendingItem: Decodable, Identifiable, Sendable {
             runtime: nil,
             numberOfSeasons: nil,
             seasons: nil,
-            cast: nil
+            cast: nil,
+            certification: nil,
+            backdropPath: nil
         )
+    }
+}
+
+// MARK: - TMDB certification response types
+
+struct TMDBReleaseDatesWrapper: Decodable, Sendable {
+    let results: [TMDBReleaseDateCountry]
+}
+
+struct TMDBReleaseDateCountry: Decodable, Sendable {
+    let iso31661: String
+    let releaseDates: [TMDBReleaseDate]
+
+    enum CodingKeys: String, CodingKey {
+        case iso31661 = "iso_3166_1"
+        case releaseDates = "release_dates"
+    }
+}
+
+struct TMDBReleaseDate: Decodable, Sendable {
+    let certification: String
+}
+
+struct TMDBContentRatingsWrapper: Decodable, Sendable {
+    let results: [TMDBContentRating]
+}
+
+struct TMDBContentRating: Decodable, Sendable {
+    let iso31661: String
+    let rating: String
+
+    enum CodingKeys: String, CodingKey {
+        case iso31661 = "iso_3166_1"
+        case rating
     }
 }

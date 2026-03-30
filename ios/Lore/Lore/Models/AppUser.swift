@@ -70,8 +70,8 @@ struct AppUser: Identifiable, Hashable, Sendable {
             email: data["email"] as? String ?? "",
             photoURL: data["photoURL"] as? String,
             ratingCount: data["ratingCount"] as? Int ?? 0,
-            followerlist: data["followerlist"] as? [String] ?? [],
-            followinglist: data["followinglist"] as? [String] ?? [],
+            followerlist: (data["followerlist"] as? [Any])?.compactMap { $0 as? String } ?? [],
+            followinglist: (data["followinglist"] as? [Any])?.compactMap { $0 as? String } ?? [],
             watchlist: watchlist,
             isDeveloper: data["isDeveloper"] as? Bool ?? false
         )

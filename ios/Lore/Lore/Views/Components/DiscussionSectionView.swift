@@ -16,32 +16,38 @@ struct DiscussionSectionView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
-            // Section header
-            Text("Discussion")
-                .font(.system(size: 20, weight: .bold))
-                .foregroundStyle(.white)
-                .padding(.horizontal, 16)
+            // Section header + tab pills
+            HStack {
+                Text("Discussion")
+                    .font(.system(size: 20, weight: .bold))
+                    .foregroundStyle(.white)
 
-            // Tab picker
-            HStack(spacing: 0) {
-                ForEach(["Friends", "All"], id: \.self) { label in
-                    let idx = label == "Friends" ? 0 : 1
-                    Button(action: { tab = idx }) {
-                        VStack(spacing: 0) {
+                Spacer()
+
+                HStack(spacing: 8) {
+                    ForEach(["Friends", "All"], id: \.self) { label in
+                        let idx = label == "Friends" ? 0 : 1
+                        Button(action: { tab = idx }) {
                             Text(label)
-                                .font(.system(size: 14, weight: tab == idx ? .semibold : .regular))
+                                .font(.system(size: 13, weight: .medium))
                                 .foregroundStyle(tab == idx ? .white : .white.opacity(0.5))
-                                .padding(.vertical, 10)
-                                .padding(.horizontal, 20)
-                            Rectangle()
-                                .fill(tab == idx ? Color.white : Color.clear)
-                                .frame(height: 2)
+                                .padding(.horizontal, 14)
+                                .padding(.vertical, 7)
+                                .background(
+                                    tab == idx
+                                        ? Color.white.opacity(0.12)
+                                        : Color.clear
+                                )
+                                .clipShape(Capsule())
+                                .overlay(
+                                    Capsule()
+                                        .stroke(Color(hex: "#2a2930"), lineWidth: 1)
+                                )
                         }
                     }
                 }
-                Spacer()
             }
-            .background(Color(hex: "#1c1b21"))
+            .padding(.horizontal, 16)
 
             // Composer
             if let user = authVM.currentUser {
@@ -269,16 +275,24 @@ private struct ThreadView: View {
             thread.voteCount += 1
         }
         let delta = wasUpvoted ? -1 : 1
-        try? await db.commit(writes: [
-            .init(kind: .increment(
-                path: "mediaDiscussions/\(mediaKey)/threads/\(thread.id)",
-                field: "voteCount",
-                amount: delta
-            )),
+        let threadPath = "mediaDiscussions/\(mediaKey)/threads/\(thread.id)"
+
+        var writes: [FirestoreService.WriteOp] = [
+            .init(kind: .increment(path: threadPath, field: "voteCount", amount: delta)),
             wasUpvoted
-                ? .init(kind: .arrayRemove(path: "mediaDiscussions/\(mediaKey)/threads/\(thread.id)", field: "upvoterUids", values: [uid]))
-                : .init(kind: .arrayUnion(path: "mediaDiscussions/\(mediaKey)/threads/\(thread.id)", field: "upvoterUids", values: [uid]))
-        ])
+                ? .init(kind: .arrayRemove(path: threadPath, field: "upvoterUids", values: [uid]))
+                : .init(kind: .arrayUnion(path: threadPath,  field: "upvoterUids", values: [uid]))
+        ]
+        // If this thread was created from a feed activity post, keep vote counts in sync
+        if let activityId = thread.activityId {
+            writes += [
+                .init(kind: .increment(path: "activity/\(activityId)", field: "voteCount", amount: delta)),
+                wasUpvoted
+                    ? .init(kind: .arrayRemove(path: "activity/\(activityId)", field: "upvoterUids", values: [uid]))
+                    : .init(kind: .arrayUnion( path: "activity/\(activityId)", field: "upvoterUids", values: [uid]))
+            ]
+        }
+        try? await db.commit(writes: writes)
     }
 
     private func deleteThread() async {

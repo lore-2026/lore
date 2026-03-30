@@ -56,6 +56,36 @@ service cloud.firestore {
       allow update, delete: if request.auth != null;
     }
 
+    // Activity feed collection.
+    // activity/{activityId} — one doc per rating action
+    // activity/{activityId}/comments/{commentId} — inline comments
+    match /activity/{activityId} {
+      allow read: if request.auth != null;
+
+      // Only the owner can create their own activity entry
+      allow create: if request.auth != null && request.resource.data.uid == request.auth.uid;
+
+      // Owner can delete; anyone authenticated can update voteCount/upvoterUids or commentCount
+      allow delete: if request.auth != null && resource.data.uid == request.auth.uid;
+      allow update: if request.auth != null && (
+        resource.data.uid == request.auth.uid ||
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['voteCount', 'upvoterUids']) ||
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['commentCount'])
+      );
+
+      match /comments/{commentId} {
+        allow read: if request.auth != null;
+
+        allow create: if request.auth != null
+          && request.resource.data.uid == request.auth.uid
+          && request.resource.data.text is string
+          && request.resource.data.text.size() > 0
+          && request.resource.data.text.size() <= 500;
+
+        allow delete: if request.auth != null && resource.data.uid == request.auth.uid;
+      }
+    }
+
     // Discussion threads and replies per media item.
     // mediaDiscussions/{mediaKey}/threads/{threadId}/replies/{replyId}
     match /mediaDiscussions/{mediaKey} {
