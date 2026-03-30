@@ -228,7 +228,7 @@ private struct SwipeComparisonPage: View {
                    let entry = comp.currentComparison,
                    let newTitle = vm.mediaItem?.title {
                     let existingTitle = vm.comparisonMediaCache[entry.mediaId]?.title ?? entry.mediaName ?? "this"
-                    Text("How does \"\(newTitle)\" compare to \"\(existingTitle)\"?")
+                    Text("How does \"\(existingTitle)\" compare to \"\(newTitle)\"?")
                         .font(.system(size: 22, weight: .bold))
                         .foregroundStyle(.white)
                         .multilineTextAlignment(.center)
@@ -328,7 +328,7 @@ private struct SwipeComparisonPage: View {
             return
         }
 
-        let preferNewItem = translation > 0  // swipe right = "Better" = new item wins
+        let preferNewItem = translation < 0  // swipe right = existing card goes to "Better" = existing wins; swipe left = new item wins
         isCommitting = true
 
         let generator = UIImpactFeedbackGenerator(style: .medium)
@@ -476,9 +476,9 @@ private struct RatingCompletePage: View {
                             .padding(.horizontal, 40)
                     }
 
-                    if let score = vm.myRating?.displayScore {
-                        Text(String(format: "%.1f", score))
-                            .font(.system(size: 56, weight: .bold))
+                    if let rating = vm.myRating {
+                        Text(String(format: "%.1f", rating.displayScore ?? rating.score))
+                            .font(.system(size: 28, weight: .bold))
                             .foregroundStyle(.white)
                     }
                 }

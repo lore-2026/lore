@@ -1,0 +1,40 @@
+{
+  "source": "/Users/alysaliu/lore/ios/Lore/Lore/Views/LoginView.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "Lore",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 19
+        }
+      },
+      {
+        "comment": "",
+        "key": "Rate movies and shows.\nShare with friends.",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 23
+        }
+      },
+      {
+        "comment": "",
+        "key": "Signing in…",
+        "location": {
+          "startingColumn": 53,
+          "startingLine": 54
+        }
+      },
+      {
+        "comment": "",
+        "key": "Continue with Google",
+        "location": {
+          "startingColumn": 71,
+          "startingLine": 54
+        }
+      }
+    ]
+  },
+  "version": 1
+}

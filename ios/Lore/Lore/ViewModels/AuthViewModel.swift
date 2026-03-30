@@ -65,6 +65,60 @@ class AuthViewModel {
         }
     }
 
+    // MARK: - Email Sign-In
+
+    func signInWithEmailOrUsername(emailOrUsername: String, password: String) async {
+        isLoading = true
+        error = nil
+        defer { isLoading = false }
+
+        do {
+            let creds = try await auth.signInWithEmail(email: emailOrUsername, password: password)
+            if let (_, data) = try await db.getDocument(path: "users/\(creds.uid)"),
+               let user = AppUser.from(id: creds.uid, data: data) as AppUser?,
+               !user.username.isEmpty {
+                currentUser = user
+            } else {
+                currentUser = AppUser(id: creds.uid, firstname: "", lastname: "", email: creds.email)
+                try await db.setDocument(path: "users/\(creds.uid)", data: currentUser!.toFirestoreData())
+            }
+        } catch {
+            self.error = error.localizedDescription
+        }
+    }
+
+    // MARK: - Email Sign-Up
+
+    func createAccount(email: String, password: String, username: String) async {
+        isLoading = true
+        error = nil
+        defer { isLoading = false }
+
+        do {
+            // Create Firebase Auth account first — this sets the auth token so
+            // subsequent Firestore calls are authenticated (rules require auth).
+            let creds = try await auth.createAccount(email: email, password: password)
+
+            // Now check username availability
+            if let _ = try await db.getDocument(path: "usernames/\(username.lowercased())") {
+                self.error = "Username is already taken"
+                return
+            }
+
+            var user = AppUser(id: creds.uid, firstname: "", lastname: "", email: creds.email)
+            user.username = username.lowercased()
+
+            try await db.commit(writes: [
+                .init(kind: .set(path: "users/\(creds.uid)", data: user.toFirestoreData())),
+                .init(kind: .set(path: "usernames/\(username.lowercased())", data: ["uid": creds.uid]))
+            ])
+
+            currentUser = user
+        } catch {
+            self.error = error.localizedDescription
+        }
+    }
+
     // MARK: - Onboarding: save username
 
     func completeOnboarding(username: String) async throws {

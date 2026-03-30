@@ -49,6 +49,9 @@ extension DeveloperToolsSupport.ImageResource {
     /// The "search" asset catalog image resource.
     static let search = DeveloperToolsSupport.ImageResource(name: "search", bundle: resourceBundle)
 
+    /// The "settings" asset catalog image resource.
+    static let settings = DeveloperToolsSupport.ImageResource(name: "settings", bundle: resourceBundle)
+
     /// The "square-plus" asset catalog image resource.
     static let squarePlus = DeveloperToolsSupport.ImageResource(name: "square-plus", bundle: resourceBundle)
 
@@ -163,6 +166,15 @@ extension AppKit.NSImage {
 #endif
     }
 
+    /// The "settings" asset catalog image.
+    static var settings: AppKit.NSImage {
+#if !targetEnvironment(macCatalyst)
+        .init(resource: .settings)
+#else
+        .init()
+#endif
+    }
+
     /// The "square-plus" asset catalog image.
     static var squarePlus: AppKit.NSImage {
 #if !targetEnvironment(macCatalyst)
@@ -229,6 +241,15 @@ extension UIKit.UIImage {
     static var search: UIKit.UIImage {
 #if !os(watchOS)
         .init(resource: .search)
+#else
+        .init()
+#endif
+    }
+
+    /// The "settings" asset catalog image.
+    static var settings: UIKit.UIImage {
+#if !os(watchOS)
+        .init(resource: .settings)
 #else
         .init()
 #endif

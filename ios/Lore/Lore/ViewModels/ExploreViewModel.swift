@@ -4,7 +4,7 @@ import Observation
 enum ExploreFilter: String, CaseIterable, Identifiable {
     case all = "All"
     case movies = "Movies"
-    case shows = "TV Shows"
+    case shows = "Shows"
     case profiles = "Profiles"
 
     var id: String { rawValue }
@@ -42,6 +42,10 @@ class ExploreViewModel {
             isSearching = false
             return
         }
+
+        isSearching = true
+        mediaResults = []
+        profileResults = []
 
         searchTask = Task {
             try? await Task.sleep(nanoseconds: 300_000_000)   // 300ms debounce

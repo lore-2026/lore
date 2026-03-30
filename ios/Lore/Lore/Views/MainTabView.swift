@@ -40,7 +40,7 @@ struct MainTabView: View {
 
             SettingsView(authVM: authVM)
                 .tabItem {
-                    Label("Settings", systemImage: "gearshape.fill")
+                    Label("Settings", image: "settings")
                 }
                 .tag(3)
         }

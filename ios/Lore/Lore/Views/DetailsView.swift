@@ -24,9 +24,7 @@ struct DetailsView: View {
         ZStack(alignment: .topLeading) {
             Color(hex: "#141218").ignoresSafeArea()
 
-            if vm.isLoading {
-                ProgressView().tint(.white)
-            } else if let media = vm.mediaItem {
+            if let media = vm.mediaItem {
                 // Backdrop pinned behind status bar
                 BackdropView(media: media)
 
@@ -34,29 +32,28 @@ struct DetailsView: View {
                     VStack(alignment: .leading, spacing: 0) {
                         HeroSection(media: media, vm: vm, showAddToList: $showAddToList)
 
+                        // Score cards — directly below poster
+                        RatingSummaryCards(vm: vm, showUserRating: vm.phase == .done)
+                            .padding(.horizontal, 16)
+                            .padding(.top, 20)
+
                         // Overview, genres, runtime
                         MediaMetadataView(media: media)
                             .padding(.horizontal, 16)
                             .padding(.top, 16)
 
-                        // Rating area — "Add rating" CTA or inline score display
-                        if vm.phase == .done {
-                            DoneRatingView(vm: vm, media: media)
-                                .padding(.horizontal, 16)
-                                .padding(.top, 20)
-                        } else {
-                            Button(action: { showRatingFlow = true }) {
-                                Text("Add rating")
-                                    .font(.system(size: 15, weight: .semibold))
-                                    .foregroundStyle(Color(hex: "#141218"))
-                                    .frame(maxWidth: .infinity)
-                                    .padding(.vertical, 14)
-                                    .background(Color.white)
-                                    .clipShape(RoundedRectangle(cornerRadius: 32))
-                            }
-                            .padding(.horizontal, 16)
-                            .padding(.top, 20)
+                        // Rate / re-rank button — below description
+                        Button(action: { showRatingFlow = true }) {
+                            Text(vm.phase == .done ? "Re-rank" : "Rate")
+                                .font(.system(size: 15, weight: .semibold))
+                                .foregroundStyle(Color(hex: "#141218"))
+                                .frame(maxWidth: .infinity)
+                                .padding(.vertical, 14)
+                                .background(Color.white)
+                                .clipShape(RoundedRectangle(cornerRadius: 32))
                         }
+                        .padding(.horizontal, 16)
+                        .padding(.top, 16)
 
                         // Discussion (only available after rating)
                         if vm.phase == .done {
@@ -87,7 +84,7 @@ struct DetailsView: View {
             // Back button overlaid directly — avoids iOS 26 toolbar glass effect
             BackButtonView(title: vm.mediaItem?.title)
                 .padding(.top, 8)
-                .padding(.leading, 16)
+                .padding(.leading, 24)
         }
         .navigationBarHidden(true)
         .task {
@@ -186,55 +183,28 @@ private struct HeroSection: View {
     }
 }
 
-// MARK: - Done view (existing rating)
+// MARK: - Rating summary cards
 
-private struct DoneRatingView: View {
-    @Bindable var vm: DetailsViewModel
-    let media: MediaItem
-    @Environment(AuthViewModel.self) private var authVM
-
-    var body: some View {
-        VStack(spacing: 12) {
-            if let rating = vm.myRating {
-                // Note
-                if let note = rating.note, !note.isEmpty {
-                    Text(note)
-                        .font(.system(size: 14))
-                        .foregroundStyle(.white.opacity(0.8))
-                        .lineLimit(3)
-                }
-
-                // Score cards
-                RatingScoreCards(vm: vm, myRating: rating)
-            }
-        }
-    }
-}
-
-// MARK: - Rating score cards
-
-private struct RatingScoreCards: View {
+private struct RatingSummaryCards: View {
     let vm: DetailsViewModel
-    let myRating: RatingEntry
+    let showUserRating: Bool
+
+    private var friendsAvg: Double? {
+        RatingsEngine.average(scores: vm.friendsRatings.values.compactMap { $0.displayScore ?? $0.score })
+    }
+    private var hasAnyScore: Bool {
+        showUserRating || friendsAvg != nil || vm.communityAverage != nil
+    }
 
     var body: some View {
-        HStack(spacing: 10) {
-            ScoreCard(
-                label: "Your rating",
-                score: myRating.displayScore ?? myRating.score
-            )
-
-            ScoreCard(
-                label: "Friends",
-                score: RatingsEngine.average(scores: vm.friendsRatings.values.compactMap {
-                    $0.displayScore ?? $0.score
-                })
-            )
-
-            ScoreCard(
-                label: "Community",
-                score: vm.communityAverage
-            )
+        if hasAnyScore {
+            HStack(spacing: 10) {
+                if showUserRating, let rating = vm.myRating {
+                    ScoreCard(label: "Your rating", score: rating.displayScore ?? rating.score)
+                }
+                ScoreCard(label: "Friends", score: friendsAvg)
+                ScoreCard(label: "Community", score: vm.communityAverage)
+            }
         }
     }
 }
@@ -361,27 +331,12 @@ struct AddToListSheet: View {
 
     @State private var vm = ProfileViewModel()
     @State private var showCreate = false
+    @State private var selectedListIds: Set<String> = []
+    @State private var initialSelectedListIds: Set<String> = []
+    @State private var searchText = ""
+    @State private var isSaving = false
     @Environment(\.dismiss) private var dismiss
 
-    var body: some View {
-        NavigationStack {
-            listPickerView
-                .navigationDestination(isPresented: $showCreate) {
-                    CreateListView(
-                        mediaId: mediaId,
-                        mediaType: mediaType,
-                        currentUser: currentUser,
-                        vm: vm,
-                        onCreated: { dismiss() }
-                    )
-                }
-        }
-        .task {
-            await vm.loadListsIfNeeded(uid: currentUser.id, isOwner: true)
-        }
-    }
-
-    // Synthetic watchlist entry built from the user's watchlist array
     private var watchlistEntry: CustomList {
         let items = currentUser.watchlist.map {
             ListItem(mediaId: $0.mediaId, mediaType: $0.mediaType, timestamp: $0.timestamp)
@@ -389,8 +344,27 @@ struct AddToListSheet: View {
         return CustomList(id: "watchlist", name: "Watchlist", description: "", visibility: .publicList, items: items)
     }
 
-    private var allLists: [CustomList] {
-        [watchlistEntry] + vm.customLists
+    private var allLists: [CustomList] { [watchlistEntry] + vm.customLists }
+
+    private var filteredLists: [CustomList] {
+        searchText.isEmpty ? allLists : allLists.filter {
+            $0.name.localizedCaseInsensitiveContains(searchText)
+        }
+    }
+
+    var body: some View {
+        if showCreate {
+            CreateListView(
+                mediaId: mediaId,
+                mediaType: mediaType,
+                currentUser: currentUser,
+                vm: vm,
+                onCreated: { dismiss() },
+                onBack: { showCreate = false }
+            )
+        } else {
+            listPickerView
+        }
     }
 
     private var listPickerView: some View {
@@ -403,7 +377,35 @@ struct AddToListSheet: View {
                     .fill(Color.white.opacity(0.25))
                     .frame(width: 36, height: 4)
                     .padding(.top, 10)
-                    .padding(.bottom, 6)
+                    .padding(.bottom, 10)
+
+                // Title
+                Text("Add to list")
+                    .font(.system(size: 17, weight: .semibold))
+                    .foregroundStyle(.white)
+                    .padding(.bottom, 12)
+
+                // Search bar
+                HStack(spacing: 10) {
+                    Image(systemName: "magnifyingglass")
+                        .foregroundStyle(.white.opacity(0.5))
+                    TextField("Search lists…", text: $searchText)
+                        .textFieldStyle(.plain)
+                        .foregroundStyle(.white)
+                        .autocorrectionDisabled()
+                    if !searchText.isEmpty {
+                        Button(action: { searchText = "" }) {
+                            Image(systemName: "xmark.circle.fill")
+                                .foregroundStyle(.white.opacity(0.5))
+                        }
+                    }
+                }
+                .padding(.horizontal, 14)
+                .padding(.vertical, 10)
+                .background(Color(hex: "#1c1b21"))
+                .clipShape(RoundedRectangle(cornerRadius: 12))
+                .padding(.horizontal, 16)
+                .padding(.bottom, 4)
 
                 Group {
                     if vm.isLoading {
@@ -412,77 +414,117 @@ struct AddToListSheet: View {
                     } else {
                         ScrollView {
                             VStack(spacing: 0) {
-                                ForEach(allLists) { list in
+                                ForEach(filteredLists) { list in
                                     ListPickerRow(
                                         list: list,
-                                        mediaId: mediaId,
-                                        mediaType: mediaType
-                                    ) {
-                                        Task {
-                                            if list.id == "watchlist" {
-                                                await vm.toggleWatchlist(
-                                                    mediaId: mediaId,
-                                                    mediaType: mediaType,
-                                                    currentUser: currentUser
-                                                )
+                                        isSelected: selectedListIds.contains(list.id),
+                                        onToggle: {
+                                            if selectedListIds.contains(list.id) {
+                                                selectedListIds.remove(list.id)
                                             } else {
-                                                try? await vm.addItemToList(
-                                                    listId: list.id,
-                                                    mediaId: mediaId,
-                                                    mediaType: mediaType,
-                                                    ownerUid: currentUser.id
-                                                )
+                                                selectedListIds.insert(list.id)
                                             }
-                                            dismiss()
                                         }
-                                    }
+                                    )
                                     Divider()
                                         .background(Color(hex: "#2a2930"))
                                 }
-                                Color.clear.frame(height: 96)
+                                Color.clear.frame(height: 100)
                             }
                         }
                     }
                 }
             }
 
-            // Pinned CTA
-            VStack(spacing: 0) {
+            // Pinned CTAs
+            VStack(spacing: 8) {
                 Button(action: { showCreate = true }) {
-                    Text("Add to new list")
+                    Text("New list")
                         .font(.system(size: 16, weight: .semibold))
-                        .foregroundStyle(Color(hex: "#141218"))
+                        .foregroundStyle(.white)
                         .frame(maxWidth: .infinity)
-                        .padding(.vertical, 16)
-                        .background(Color.white)
+                        .padding(.vertical, 14)
+                        .background(Color.clear)
                         .clipShape(RoundedRectangle(cornerRadius: 32))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 32)
+                                .stroke(Color(hex: "#2a2930"), lineWidth: 1)
+                        )
                 }
                 .padding(.horizontal, 16)
-                .padding(.top, 12)
+
+                Button(action: saveSelections) {
+                    Group {
+                        if isSaving {
+                            ProgressView().tint(Color(hex: "#141218"))
+                        } else {
+                            Text("Save")
+                                .font(.system(size: 16, weight: .semibold))
+                                .foregroundStyle(Color(hex: "#141218"))
+                        }
+                    }
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 16)
+                    .background(Color.white)
+                    .clipShape(RoundedRectangle(cornerRadius: 32))
+                }
+                .disabled(isSaving)
+                .padding(.horizontal, 16)
                 .padding(.bottom, 34)
             }
             .background(Color(hex: "#141218"))
         }
-        .navigationBarHidden(true)
+        .task {
+            await vm.loadListsIfNeeded(uid: currentUser.id, isOwner: true)
+            initializeSelections()
+        }
+    }
+
+    private func initializeSelections() {
+        let ids = Set(allLists.filter { list in
+            list.items.contains { $0.mediaId == mediaId && $0.mediaType == mediaType }
+        }.map { $0.id })
+        selectedListIds = ids
+        initialSelectedListIds = ids
+    }
+
+    private func saveSelections() {
+        guard !isSaving else { return }
+        isSaving = true
+        Task {
+            for list in allLists {
+                let nowSelected = selectedListIds.contains(list.id)
+                let wasSelected = initialSelectedListIds.contains(list.id)
+                guard nowSelected != wasSelected else { continue }
+                if list.id == "watchlist" {
+                    await vm.toggleWatchlist(mediaId: mediaId, mediaType: mediaType, currentUser: currentUser)
+                } else if nowSelected {
+                    try? await vm.addItemToList(listId: list.id, mediaId: mediaId, mediaType: mediaType, ownerUid: currentUser.id)
+                } else {
+                    try? await vm.removeItemFromList(listId: list.id, mediaId: mediaId, mediaType: mediaType, ownerUid: currentUser.id)
+                }
+            }
+            dismiss()
+        }
     }
 }
 
 private struct ListPickerRow: View {
     let list: CustomList
-    let mediaId: String
-    let mediaType: MediaType
-    let onTap: () -> Void
+    let isSelected: Bool
+    let onToggle: () -> Void
 
     @State private var posterURLs: [URL?] = []
 
-    private var isAlreadyAdded: Bool {
-        list.items.contains { $0.mediaId == mediaId && $0.mediaType == mediaType }
-    }
-
     var body: some View {
-        Button(action: onTap) {
-            VStack(alignment: .leading, spacing: 10) {
-                HStack(alignment: .center) {
+        Button(action: onToggle) {
+            HStack(alignment: .top, spacing: 12) {
+                Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
+                    .font(.system(size: 22))
+                    .foregroundStyle(isSelected ? .white : .white.opacity(0.3))
+                    .padding(.top, 1)
+
+                VStack(alignment: .leading, spacing: 8) {
                     VStack(alignment: .leading, spacing: 3) {
                         Text(list.name)
                             .font(.system(size: 16, weight: .semibold))
@@ -494,40 +536,34 @@ private struct ListPickerRow: View {
                                 .lineLimit(1)
                         }
                     }
-                    Spacer()
-                    if isAlreadyAdded {
-                        Image(systemName: "checkmark")
-                            .font(.system(size: 14, weight: .semibold))
-                            .foregroundStyle(.white.opacity(0.45))
-                    }
-                }
 
-                if !list.items.isEmpty {
-                    ScrollView(.horizontal, showsIndicators: false) {
-                        HStack(spacing: 5) {
-                            ForEach(Array(list.items.prefix(8).enumerated()), id: \.offset) { idx, _ in
-                                Group {
-                                    if idx < posterURLs.count, let url = posterURLs[idx] {
-                                        AsyncImage(url: url) { phase in
-                                            if case .success(let img) = phase {
-                                                img.resizable().scaledToFill()
-                                            } else {
-                                                Color(hex: "#2b2a33")
+                    if !list.items.isEmpty {
+                        ScrollView(.horizontal, showsIndicators: false) {
+                            HStack(spacing: 5) {
+                                ForEach(Array(list.items.prefix(8).enumerated()), id: \.offset) { idx, _ in
+                                    Group {
+                                        if idx < posterURLs.count, let url = posterURLs[idx] {
+                                            AsyncImage(url: url) { phase in
+                                                if case .success(let img) = phase {
+                                                    img.resizable().scaledToFill()
+                                                } else {
+                                                    Color(hex: "#2b2a33")
+                                                }
                                             }
+                                        } else {
+                                            Color(hex: "#2b2a33")
                                         }
-                                    } else {
-                                        Color(hex: "#2b2a33")
                                     }
+                                    .frame(width: 46, height: 68)
+                                    .clipShape(RoundedRectangle(cornerRadius: 4))
                                 }
-                                .frame(width: 46, height: 68)
-                                .clipShape(RoundedRectangle(cornerRadius: 4))
                             }
                         }
                     }
                 }
             }
             .padding(.horizontal, 20)
-            .padding(.vertical, 16)
+            .padding(.vertical, 14)
         }
         .buttonStyle(.plain)
         .task(id: list.id) {
@@ -560,6 +596,7 @@ private struct CreateListView: View {
     let currentUser: AppUser
     @Bindable var vm: ProfileViewModel
     let onCreated: () -> Void
+    var onBack: (() -> Void)? = nil
 
     @State private var name = ""
     @State private var description = ""
@@ -574,7 +611,7 @@ private struct CreateListView: View {
             VStack(spacing: 0) {
                 // Top bar
                 HStack {
-                    Button(action: { dismiss() }) {
+                    Button(action: { if let onBack { onBack() } else { dismiss() } }) {
                         Image(systemName: "chevron.left")
                             .font(.system(size: 20, weight: .semibold))
                             .foregroundStyle(.white)
@@ -588,7 +625,7 @@ private struct CreateListView: View {
                 }
                 .padding(.horizontal, 20)
                 .padding(.top, 16)
-                .padding(.bottom, 24)
+                .padding(.bottom, 8)
 
                 VStack(spacing: 12) {
                     // Name field
@@ -703,6 +740,8 @@ private struct BackButtonView: View {
                 }
             }
             .foregroundStyle(.white)
+            .padding(.vertical, 10)
+            .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
     }

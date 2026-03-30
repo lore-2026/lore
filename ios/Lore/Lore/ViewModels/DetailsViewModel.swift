@@ -270,7 +270,7 @@ class DetailsViewModel {
 
         Task {
             let docId = RatingEntry.docId(mediaType: mediaItem.mediaType, mediaId: mediaItem.id, season: selectedSeason)
-            let entry = RatingEntry(
+            var entry = RatingEntry(
                 docId: docId,
                 mediaType: mediaItem.mediaType,
                 mediaId: mediaItem.id,
@@ -282,6 +282,7 @@ class DetailsViewModel {
                 timestamp: ISO8601DateFormatter().string(from: Date()),
                 season: selectedSeason
             )
+            entry.displayScore = scoreBasic
 
             do {
                 let userPath: String

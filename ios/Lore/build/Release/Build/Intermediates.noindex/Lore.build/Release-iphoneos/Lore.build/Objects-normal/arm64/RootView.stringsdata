@@ -1,0 +1,16 @@
+{
+  "source": "/Users/alysaliu/lore/ios/Lore/Lore/Views/RootView.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "Lore",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 38
+        }
+      }
+    ]
+  },
+  "version": 1
+}

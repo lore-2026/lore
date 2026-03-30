@@ -1,0 +1,112 @@
+{
+  "source": "/Users/alysaliu/lore/ios/Lore/Lore/Views/ProfileView.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "Unfollow",
+        "location": {
+          "startingColumn": 51,
+          "startingLine": 91
+        }
+      },
+      {
+        "comment": "",
+        "key": "Follow",
+        "location": {
+          "startingColumn": 64,
+          "startingLine": 91
+        }
+      },
+      {
+        "comment": "",
+        "key": "@%@",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 151
+        }
+      },
+      {
+        "comment": "",
+        "key": "%lld",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 202
+        }
+      },
+      {
+        "comment": "",
+        "key": "%lld items · %@",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 255
+        }
+      },
+      {
+        "comment": "",
+        "key": "No %@ ratings yet",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 280
+        }
+      },
+      {
+        "comment": "",
+        "key": "%lld",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 305
+        }
+      },
+      {
+        "comment": "",
+        "key": "Done",
+        "location": {
+          "startingColumn": 28,
+          "startingLine": 396
+        }
+      },
+      {
+        "comment": "",
+        "key": "Edit Username",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 437
+        }
+      },
+      {
+        "comment": "",
+        "key": "New username",
+        "location": {
+          "startingColumn": 31,
+          "startingLine": 419
+        }
+      },
+      {
+        "comment": "",
+        "key": "Cancel",
+        "location": {
+          "startingColumn": 28,
+          "startingLine": 441
+        }
+      },
+      {
+        "comment": "",
+        "key": "Saving…",
+        "location": {
+          "startingColumn": 39,
+          "startingLine": 444
+        }
+      },
+      {
+        "comment": "",
+        "key": "Save",
+        "location": {
+          "startingColumn": 53,
+          "startingLine": 444
+        }
+      }
+    ]
+  },
+  "version": 1
+}

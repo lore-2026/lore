@@ -9,6 +9,7 @@ enum AuthError: Error, LocalizedError {
     case tokenExchangeFailed
     case userNotFound
     case networkError(Error)
+    case emailAuthFailed(String)
 
     var errorDescription: String? {
         switch self {
@@ -17,6 +18,7 @@ enum AuthError: Error, LocalizedError {
         case .tokenExchangeFailed: return "Failed to exchange token"
         case .userNotFound: return "User not found"
         case .networkError(let e): return e.localizedDescription
+        case .emailAuthFailed(let msg): return msg
         }
     }
 }
@@ -208,6 +210,90 @@ class AuthService: NSObject, ASWebAuthenticationPresentationContextProviding {
         )
 
         return credentials
+    }
+
+    // MARK: - Email / Password Sign-In
+
+    func signInWithEmail(email: String, password: String) async throws -> AuthCredentials {
+        let urlStr = "\(Config.firebaseAuthBase)/accounts:signInWithPassword?key=\(Config.firebaseApiKey)"
+        guard let url = URL(string: urlStr) else { throw AuthError.firebaseSignInFailed }
+
+        var req = URLRequest(url: url)
+        req.httpMethod = "POST"
+        req.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        let body: [String: Any] = ["email": email, "password": password, "returnSecureToken": true]
+        req.httpBody = try JSONSerialization.data(withJSONObject: body)
+
+        let (data, response) = try await URLSession.shared.data(for: req)
+        if let status = (response as? HTTPURLResponse)?.statusCode, !(200...299).contains(status) {
+            let msg = parseFirebaseError(data: data)
+            throw AuthError.emailAuthFailed(msg)
+        }
+
+        return try await parseFirebaseSignInResponse(data: data, isNewUser: false)
+    }
+
+    // MARK: - Email / Password Create Account
+
+    func createAccount(email: String, password: String) async throws -> AuthCredentials {
+        let urlStr = "\(Config.firebaseAuthBase)/accounts:signUp?key=\(Config.firebaseApiKey)"
+        guard let url = URL(string: urlStr) else { throw AuthError.firebaseSignInFailed }
+
+        var req = URLRequest(url: url)
+        req.httpMethod = "POST"
+        req.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        let body: [String: Any] = ["email": email, "password": password, "returnSecureToken": true]
+        req.httpBody = try JSONSerialization.data(withJSONObject: body)
+
+        let (data, response) = try await URLSession.shared.data(for: req)
+        if let status = (response as? HTTPURLResponse)?.statusCode, !(200...299).contains(status) {
+            let msg = parseFirebaseError(data: data)
+            throw AuthError.emailAuthFailed(msg)
+        }
+
+        return try await parseFirebaseSignInResponse(data: data, isNewUser: true)
+    }
+
+    private func parseFirebaseSignInResponse(data: Data, isNewUser: Bool) async throws -> AuthCredentials {
+        let decoded = try JSONDecoder().decode(FirebaseSignInResponse.self, from: data)
+        let expiresIn = Int(decoded.expiresIn) ?? 3600
+
+        savedRefreshToken = decoded.refreshToken
+        savedUid = decoded.localId
+
+        await FirestoreService.shared.setCredentials(
+            idToken: decoded.idToken,
+            refreshToken: decoded.refreshToken,
+            expiresIn: expiresIn
+        )
+
+        return AuthCredentials(
+            uid: decoded.localId,
+            email: decoded.email ?? "",
+            displayName: decoded.displayName ?? "",
+            photoURL: decoded.photoUrl,
+            idToken: decoded.idToken,
+            refreshToken: decoded.refreshToken,
+            expiresIn: expiresIn,
+            isNewUser: isNewUser
+        )
+    }
+
+    private func parseFirebaseError(data: Data) -> String {
+        guard let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+              let error = json["error"] as? [String: Any],
+              let message = error["message"] as? String else {
+            return "Authentication failed"
+        }
+        switch message {
+        case "EMAIL_NOT_FOUND", "INVALID_LOGIN_CREDENTIALS": return "Invalid email or password"
+        case "WRONG_PASSWORD": return "Incorrect password"
+        case "EMAIL_EXISTS": return "An account with this email already exists"
+        case "WEAK_PASSWORD : Password should be at least 6 characters": return "Password must be at least 6 characters"
+        case "INVALID_EMAIL": return "Invalid email address"
+        case "TOO_MANY_ATTEMPTS_TRY_LATER": return "Too many attempts. Try again later."
+        default: return message
+        }
     }
 
     // MARK: - Restore session on launch

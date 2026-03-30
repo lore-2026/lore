@@ -1,5 +1,0 @@
----
-triple:          'arm64-apple-darwin'
-binary-path:     '/Users/alysaliu/lore/ios/Lore/build/Release/Lore.app/Contents/MacOS/Lore'
-relocations:     []
-...

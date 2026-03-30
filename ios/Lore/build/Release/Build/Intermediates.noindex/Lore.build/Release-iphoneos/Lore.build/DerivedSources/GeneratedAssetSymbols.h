@@ -27,6 +27,9 @@ static NSString * const ACImageNameLoreLogo1 AC_SWIFT_PRIVATE = @"lore-logo 1";
 /// The "search" asset catalog image resource.
 static NSString * const ACImageNameSearch AC_SWIFT_PRIVATE = @"search";
 
+/// The "settings" asset catalog image resource.
+static NSString * const ACImageNameSettings AC_SWIFT_PRIVATE = @"settings";
+
 /// The "square-plus" asset catalog image resource.
 static NSString * const ACImageNameSquarePlus AC_SWIFT_PRIVATE = @"square-plus";
 

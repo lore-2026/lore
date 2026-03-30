@@ -35,19 +35,21 @@ struct ExploreView: View {
                         .clipShape(RoundedRectangle(cornerRadius: 12))
                         .padding(.horizontal, 16)
 
-                        // Filter chips
-                        ScrollView(.horizontal, showsIndicators: false) {
-                            HStack(spacing: 8) {
-                                ForEach(ExploreFilter.allCases) { f in
-                                    FilterChip(title: f.rawValue, isSelected: vm.filter == f) {
-                                        vm.filter = f
-                                        if !vm.query.isEmpty {
-                                            Task { await vm.performSearch(query: vm.query) }
+                        // Filter chips — only visible when searching
+                        if vm.showingSearchResults || !vm.query.isEmpty {
+                            ScrollView(.horizontal, showsIndicators: false) {
+                                HStack(spacing: 8) {
+                                    ForEach(ExploreFilter.allCases) { f in
+                                        FilterChip(title: f.rawValue, isSelected: vm.filter == f) {
+                                            vm.filter = f
+                                            if !vm.query.isEmpty {
+                                                Task { await vm.performSearch(query: vm.query) }
+                                            }
                                         }
                                     }
                                 }
+                                .padding(.horizontal, 16)
                             }
-                            .padding(.horizontal, 16)
                         }
 
                         if vm.showingSearchResults {
@@ -58,6 +60,7 @@ struct ExploreView: View {
                     }
                     .padding(.top, 16)
                 }
+                .scrollDismissesKeyboard(.immediately)
             }
             .navigationTitle("Explore")
             .navigationBarTitleDisplayMode(.inline)
@@ -92,18 +95,18 @@ private struct SearchResultsSection: View {
             } else {
                 // Media results
                 if !vm.mediaResults.isEmpty && (vm.filter == .all || vm.filter == .movies || vm.filter == .shows) {
-                    LazyVStack(spacing: 0) {
+                    LazyVGrid(columns: [GridItem(.flexible(), spacing: 8), GridItem(.flexible(), spacing: 8), GridItem(.flexible(), spacing: 8)], spacing: 16) {
                         ForEach(vm.mediaResults, id: \.id) { result in
                             NavigationLink(destination: DetailsView(
                                 mediaId: result.id,
                                 mediaType: result.resolvedMediaType ?? .movie
                             )) {
-                                MediaRowView(result: result)
+                                SearchMediaCard(result: result)
                             }
                             .buttonStyle(.plain)
-                            Divider().background(Color(hex: "#2a2930")).padding(.leading, 76)
                         }
                     }
+                    .padding(.horizontal, 16)
                 }
 
                 // Profile results
@@ -165,7 +168,7 @@ private struct MediaRow: View {
                 .padding(.horizontal, 16)
 
             ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 12) {
+                HStack(alignment: .top, spacing: 12) {
                     ForEach(items) { item in
                         NavigationLink(destination: DetailsView(mediaId: item.id, mediaType: item.mediaType)) {
                             MediaCardView(item: item)
@@ -213,6 +216,40 @@ struct MediaRowView: View {
     }
 }
 
+struct SearchMediaCard: View {
+    let result: TMDBSearchResult
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Color(hex: "#2b2a33")
+                .aspectRatio(2/3, contentMode: .fit)
+                .overlay {
+                    if let path = result.posterPath,
+                       let url = URL(string: "\(Config.tmdbImageBase)/w185\(path)") {
+                        AsyncImage(url: url) { image in
+                            image.resizable().scaledToFill()
+                        } placeholder: {
+                            Color.clear
+                        }
+                    }
+                }
+                .clipShape(RoundedRectangle(cornerRadius: 8))
+
+            VStack(alignment: .leading, spacing: 2) {
+                Text(result.resolvedTitle)
+                    .font(.system(size: 13, weight: .medium))
+                    .foregroundStyle(.white)
+                    .lineLimit(2)
+
+                Text(result.resolvedYear ?? " ")
+                    .font(.system(size: 12))
+                    .foregroundStyle(.white.opacity(0.5))
+            }
+            .frame(maxWidth: .infinity, minHeight: 48, alignment: .topLeading)
+        }
+    }
+}
+
 struct ProfileRowView: View {
     let user: AppUser
 
@@ -247,12 +284,13 @@ struct FilterChip: View {
     var body: some View {
         Button(action: action) {
             Text(title)
-                .font(.system(size: 14, weight: .medium))
-                .foregroundStyle(isSelected ? Color(hex: "#141218") : .white)
+                .font(.system(size: 13, weight: .medium))
+                .foregroundStyle(isSelected ? .white : .white.opacity(0.5))
                 .padding(.horizontal, 14)
                 .padding(.vertical, 7)
-                .background(isSelected ? Color.white : Color(hex: "#2b2a33"))
+                .background(isSelected ? Color.white.opacity(0.12) : Color.clear)
                 .clipShape(Capsule())
+                .overlay(Capsule().stroke(Color(hex: "#2a2930"), lineWidth: 1))
         }
     }
 }

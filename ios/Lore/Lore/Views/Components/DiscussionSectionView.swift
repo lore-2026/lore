@@ -411,49 +411,50 @@ struct ComposerView: View {
     @FocusState private var focused: Bool
 
     var body: some View {
-        HStack(alignment: .top, spacing: 10) {
-            AvatarView(user: user, size: compact ? 28 : 36)
+        VStack(alignment: .trailing, spacing: 8) {
+            TextField(placeholder, text: $text, axis: .vertical)
+                .textFieldStyle(.plain)
+                .foregroundStyle(.white)
+                .font(.system(size: compact ? 13 : 14))
+                .lineLimit(compact ? 3 : 6, reservesSpace: false)
+                .focused($focused)
+                .padding(.horizontal, 12)
+                .padding(.vertical, 10)
+                .background(Color(hex: "#1c1b21"))
+                .clipShape(RoundedRectangle(cornerRadius: 10))
+                .overlay(RoundedRectangle(cornerRadius: 10).stroke(Color(hex: "#2a2930"), lineWidth: 1))
 
-            VStack(alignment: .trailing, spacing: 8) {
-                TextField(placeholder, text: $text, axis: .vertical)
-                    .textFieldStyle(.plain)
-                    .foregroundStyle(.white)
-                    .font(.system(size: compact ? 13 : 14))
-                    .lineLimit(compact ? 3 : 6, reservesSpace: false)
-                    .focused($focused)
-
-                if focused || !text.isEmpty {
-                    HStack {
-                        Button("Cancel") {
-                            text = ""
-                            focused = false
-                        }
-                        .font(.system(size: 13))
-                        .foregroundStyle(.white.opacity(0.5))
-
-                        Spacer()
-
-                        Button(action: {
-                            let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
-                            guard !trimmed.isEmpty else { return }
-                            onPost(trimmed)
-                            text = ""
-                            focused = false
-                        }) {
-                            if isPosting {
-                                ProgressView().scaleEffect(0.7).tint(.white)
-                            } else {
-                                Text("Post")
-                                    .font(.system(size: 13, weight: .semibold))
-                                    .foregroundStyle(text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? .white.opacity(0.3) : Color(hex: "#141218"))
-                                    .padding(.horizontal, 12)
-                                    .padding(.vertical, 6)
-                                    .background(text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? Color.white.opacity(0.2) : Color.white)
-                                    .clipShape(Capsule())
-                            }
-                        }
-                        .disabled(text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || isPosting)
+            if focused || !text.isEmpty {
+                HStack {
+                    Button("Cancel") {
+                        text = ""
+                        focused = false
                     }
+                    .font(.system(size: 13))
+                    .foregroundStyle(.white.opacity(0.5))
+
+                    Spacer()
+
+                    Button(action: {
+                        let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
+                        guard !trimmed.isEmpty else { return }
+                        onPost(trimmed)
+                        text = ""
+                        focused = false
+                    }) {
+                        if isPosting {
+                            ProgressView().scaleEffect(0.7).tint(.white)
+                        } else {
+                            Text("Post")
+                                .font(.system(size: 13, weight: .semibold))
+                                .foregroundStyle(text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? .white.opacity(0.3) : Color(hex: "#141218"))
+                                .padding(.horizontal, 12)
+                                .padding(.vertical, 6)
+                                .background(text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? Color.white.opacity(0.2) : Color.white)
+                                .clipShape(Capsule())
+                        }
+                    }
+                    .disabled(text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || isPosting)
                 }
             }
         }

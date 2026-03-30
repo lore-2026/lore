@@ -71,6 +71,16 @@
 			<key>catalogPath</key>
 			<string>/Users/alysaliu/lore/ios/Lore/Lore/Assets.xcassets</string>
 			<key>objcSymbol</key>
+			<string>ACImageNameSettings</string>
+			<key>relativePath</key>
+			<string>./settings.imageset</string>
+			<key>swiftSymbol</key>
+			<string>settings</string>
+		</dict>
+		<dict>
+			<key>catalogPath</key>
+			<string>/Users/alysaliu/lore/ios/Lore/Lore/Assets.xcassets</string>
+			<key>objcSymbol</key>
 			<string>ACImageNameSquarePlus</string>
 			<key>relativePath</key>
 			<string>./square-plus.imageset</string>

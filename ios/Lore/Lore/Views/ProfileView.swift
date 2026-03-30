@@ -52,7 +52,7 @@ struct ProfileView: View {
                                     }
                                 }
                             }
-                            .background(Color(hex: "#1c1b21"))
+                            .background(Color(hex: "#141218"))
 
                             // Tab content
                             Group {

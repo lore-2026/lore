@@ -42,13 +42,12 @@ struct MediaCardView: View {
                     .foregroundStyle(.white)
                     .lineLimit(2)
 
-                if let year = item.releaseYear {
-                    Text(year)
-                        .font(.system(size: 12))
-                        .foregroundStyle(.white.opacity(0.5))
-                }
+                Text(item.releaseYear ?? " ")
+                    .font(.system(size: 12))
+                    .foregroundStyle(.white.opacity(0.5))
             }
-            .frame(width: 120, alignment: .leading)
+            .frame(width: 120)
+            .frame(minHeight: 48, alignment: .topLeading)
         }
     }
 }

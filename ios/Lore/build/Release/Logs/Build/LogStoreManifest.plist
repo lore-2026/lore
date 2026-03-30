@@ -5,6 +5,175 @@
 	<key>logFormatVersion</key>
 	<integer>12</integer>
 	<key>logs</key>
-	<dict/>
+	<dict>
+		<key>31B1E76B-7338-46A5-86B3-325EAC45F5C3</key>
+		<dict>
+			<key>className</key>
+			<string>IDECommandLineBuildLog</string>
+			<key>documentTypeString</key>
+			<string>&lt;nil&gt;</string>
+			<key>domainType</key>
+			<string>Xcode.IDEActivityLogDomainType.BuildLog</string>
+			<key>fileName</key>
+			<string>31B1E76B-7338-46A5-86B3-325EAC45F5C3.xcactivitylog</string>
+			<key>hasPrimaryLog</key>
+			<true/>
+			<key>primaryObservable</key>
+			<dict>
+				<key>highLevelStatus</key>
+				<string>W</string>
+				<key>totalNumberOfAnalyzerIssues</key>
+				<integer>0</integer>
+				<key>totalNumberOfErrors</key>
+				<integer>0</integer>
+				<key>totalNumberOfTestFailures</key>
+				<integer>0</integer>
+				<key>totalNumberOfWarnings</key>
+				<integer>21</integer>
+			</dict>
+			<key>schemeIdentifier-containerName</key>
+			<string>Lore project</string>
+			<key>schemeIdentifier-schemeName</key>
+			<string>Lore</string>
+			<key>schemeIdentifier-sharedScheme</key>
+			<integer>1</integer>
+			<key>signature</key>
+			<string>Building project Lore with scheme Lore and configuration Release</string>
+			<key>timeStartedRecording</key>
+			<real>796547480.33021605</real>
+			<key>timeStoppedRecording</key>
+			<real>796547495.65688705</real>
+			<key>title</key>
+			<string>Building project Lore with scheme Lore and configuration Release</string>
+			<key>uniqueIdentifier</key>
+			<string>31B1E76B-7338-46A5-86B3-325EAC45F5C3</string>
+		</dict>
+		<key>483B745F-285C-4CCA-A303-F22BAD78FD26</key>
+		<dict>
+			<key>className</key>
+			<string>IDECommandLineBuildLog</string>
+			<key>documentTypeString</key>
+			<string>&lt;nil&gt;</string>
+			<key>domainType</key>
+			<string>Xcode.IDEActivityLogDomainType.BuildLog</string>
+			<key>fileName</key>
+			<string>483B745F-285C-4CCA-A303-F22BAD78FD26.xcactivitylog</string>
+			<key>hasPrimaryLog</key>
+			<true/>
+			<key>primaryObservable</key>
+			<dict>
+				<key>highLevelStatus</key>
+				<string>W</string>
+				<key>totalNumberOfAnalyzerIssues</key>
+				<integer>0</integer>
+				<key>totalNumberOfErrors</key>
+				<integer>0</integer>
+				<key>totalNumberOfTestFailures</key>
+				<integer>0</integer>
+				<key>totalNumberOfWarnings</key>
+				<integer>21</integer>
+			</dict>
+			<key>schemeIdentifier-containerName</key>
+			<string>Lore project</string>
+			<key>schemeIdentifier-schemeName</key>
+			<string>Lore</string>
+			<key>schemeIdentifier-sharedScheme</key>
+			<integer>1</integer>
+			<key>signature</key>
+			<string>Building project Lore with scheme Lore and configuration Release</string>
+			<key>timeStartedRecording</key>
+			<real>796547518.92598903</real>
+			<key>timeStoppedRecording</key>
+			<real>796547534.70916104</real>
+			<key>title</key>
+			<string>Building project Lore with scheme Lore and configuration Release</string>
+			<key>uniqueIdentifier</key>
+			<string>483B745F-285C-4CCA-A303-F22BAD78FD26</string>
+		</dict>
+		<key>B6554940-F633-4439-B110-89F187AB4441</key>
+		<dict>
+			<key>className</key>
+			<string>IDECommandLineBuildLog</string>
+			<key>documentTypeString</key>
+			<string>&lt;nil&gt;</string>
+			<key>domainType</key>
+			<string>Xcode.IDEActivityLogDomainType.BuildLog</string>
+			<key>fileName</key>
+			<string>B6554940-F633-4439-B110-89F187AB4441.xcactivitylog</string>
+			<key>hasPrimaryLog</key>
+			<true/>
+			<key>primaryObservable</key>
+			<dict>
+				<key>highLevelStatus</key>
+				<string>W</string>
+				<key>totalNumberOfAnalyzerIssues</key>
+				<integer>0</integer>
+				<key>totalNumberOfErrors</key>
+				<integer>0</integer>
+				<key>totalNumberOfTestFailures</key>
+				<integer>0</integer>
+				<key>totalNumberOfWarnings</key>
+				<integer>21</integer>
+			</dict>
+			<key>schemeIdentifier-containerName</key>
+			<string>Lore project</string>
+			<key>schemeIdentifier-schemeName</key>
+			<string>Lore</string>
+			<key>schemeIdentifier-sharedScheme</key>
+			<integer>1</integer>
+			<key>signature</key>
+			<string>Building project Lore with scheme Lore and configuration Release</string>
+			<key>timeStartedRecording</key>
+			<real>796548066.39023101</real>
+			<key>timeStoppedRecording</key>
+			<real>796548083.17014694</real>
+			<key>title</key>
+			<string>Building project Lore with scheme Lore and configuration Release</string>
+			<key>uniqueIdentifier</key>
+			<string>B6554940-F633-4439-B110-89F187AB4441</string>
+		</dict>
+		<key>EE7D1EAC-B33B-456B-AAD3-66A60D3734B9</key>
+		<dict>
+			<key>className</key>
+			<string>IDECommandLineBuildLog</string>
+			<key>documentTypeString</key>
+			<string>&lt;nil&gt;</string>
+			<key>domainType</key>
+			<string>Xcode.IDEActivityLogDomainType.BuildLog</string>
+			<key>fileName</key>
+			<string>EE7D1EAC-B33B-456B-AAD3-66A60D3734B9.xcactivitylog</string>
+			<key>hasPrimaryLog</key>
+			<true/>
+			<key>primaryObservable</key>
+			<dict>
+				<key>highLevelStatus</key>
+				<string>W</string>
+				<key>totalNumberOfAnalyzerIssues</key>
+				<integer>0</integer>
+				<key>totalNumberOfErrors</key>
+				<integer>0</integer>
+				<key>totalNumberOfTestFailures</key>
+				<integer>0</integer>
+				<key>totalNumberOfWarnings</key>
+				<integer>21</integer>
+			</dict>
+			<key>schemeIdentifier-containerName</key>
+			<string>Lore project</string>
+			<key>schemeIdentifier-schemeName</key>
+			<string>Lore</string>
+			<key>schemeIdentifier-sharedScheme</key>
+			<integer>1</integer>
+			<key>signature</key>
+			<string>Building project Lore with scheme Lore and configuration Release</string>
+			<key>timeStartedRecording</key>
+			<real>796547969.40939903</real>
+			<key>timeStoppedRecording</key>
+			<real>796547988.22186601</real>
+			<key>title</key>
+			<string>Building project Lore with scheme Lore and configuration Release</string>
+			<key>uniqueIdentifier</key>
+			<string>EE7D1EAC-B33B-456B-AAD3-66A60D3734B9</string>
+		</dict>
+	</dict>
 </dict>
 </plist>

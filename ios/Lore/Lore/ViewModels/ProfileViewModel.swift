@@ -205,6 +205,19 @@ class ProfileViewModel {
         )
     }
 
+    // MARK: - Remove item from custom list
+
+    func removeItemFromList(listId: String, mediaId: String, mediaType: MediaType, ownerUid: String) async throws {
+        guard let idx = customLists.firstIndex(where: { $0.id == listId }) else { return }
+        var list = customLists[idx]
+        list.items.removeAll { $0.mediaId == mediaId && $0.mediaType == mediaType }
+        customLists[idx] = list
+        try await db.updateDocument(
+            path: "users/\(ownerUid)/customLists/\(listId)",
+            fields: ["items": list.items.map { $0.toDict() }]
+        )
+    }
+
     // MARK: - Watchlist toggle
 
     func toggleWatchlist(mediaId: String, mediaType: MediaType, currentUser: AppUser) async {
