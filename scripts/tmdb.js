@@ -55,6 +55,7 @@ function formatMovie(m) {
     genres: m.genres?.map(g => g.name) ?? [],
     runtime: m.runtime ?? null,
     cast: m.credits?.cast?.slice(0, 10).map(c => ({ name: c.name, character: c.character })) ?? [],
+    keywords: m.keywords?.keywords?.map(k => k.name) ?? [],
   };
 }
 
@@ -72,6 +73,7 @@ function formatTV(s) {
       ?.filter(s => s.season_number > 0)
       .map(s => ({ season: s.season_number, name: s.name, episodes: s.episode_count })) ?? [],
     cast: s.credits?.cast?.slice(0, 10).map(c => ({ name: c.name, character: c.character })) ?? [],
+    keywords: s.keywords?.results?.map(k => k.name) ?? [],
   };
 }
 
@@ -83,6 +85,7 @@ function formatSearchResult(r) {
     year: year(r.release_date ?? r.first_air_date),
     overview: r.overview,
     posterPath: r.poster_path,
+    genreIds: r.genre_ids ?? [],
   };
 }
 
@@ -96,12 +99,12 @@ const commands = {
   },
 
   async movie(id) {
-    const data = await get(`/movie/${id}`, { append_to_response: 'credits' });
+    const data = await get(`/movie/${id}`, { append_to_response: 'credits,keywords' });
     return formatMovie(data);
   },
 
   async tv(id) {
-    const data = await get(`/tv/${id}`, { append_to_response: 'credits' });
+    const data = await get(`/tv/${id}`, { append_to_response: 'credits,keywords' });
     return formatTV(data);
   },
 

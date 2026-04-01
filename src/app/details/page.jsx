@@ -77,6 +77,7 @@ function DetailsContent() {
       score: entry.score ?? null,
       timestamp: entry.timestamp ?? null,
       ...(entry.season != null && { season: entry.season }),
+      ...(Array.isArray(entry.genres) && entry.genres.length > 0 && { genres: entry.genres }),
     }, { merge: true });
 
     if (isNew) {
@@ -420,6 +421,7 @@ function DetailsContent() {
         score: rankKey,
         timestamp: new Date().toISOString(),
         ...(selectedSeason != null && { season: selectedSeason }),
+        genres: (media?.genres || []).map(g => g.name),
       };
       await setDoc(ratingRef, newRating, { merge: true });
       await upsertMediaRatingEntry(user.uid, newRating, { isNew: !existedInRatings && !isReranking });
@@ -524,6 +526,7 @@ function DetailsContent() {
       score: '',
       timestamp: new Date().toISOString(),
       ...(selectedSeason != null && { season: selectedSeason }),
+      genres: (media?.genres || []).map(g => g.name),
     };
 
     let rebalancedEntries = null;
@@ -933,13 +936,7 @@ function DetailsContent() {
                                   {friendsForSeason.map(friend => (
                                     <div key={friend.uid} className={styles.friendBreakdownRow}>
                                       <div className={styles.friendAvatarCircle}>
-                                        {friend.photoURL ? (
-                                          <img src={friend.photoURL} alt={friend.displayName || friend.username || '?'} className={styles.friendAvatarImg} />
-                                        ) : (
-                                          <span className={styles.friendAvatarInitials}>
-                                            {(friend.displayName || friend.username || '?')[0].toUpperCase()}
-                                          </span>
-                                        )}
+                                        <img src={friend.photoURL || '/images/default-avatar-bg.png'} alt={friend.displayName || friend.username || '?'} className={styles.friendAvatarImg} />
                                       </div>
                                       <span className={styles.friendBreakdownName}>{friend.displayName || friend.username || 'Unknown'}</span>
                                       <span className={styles.friendBreakdownScore}>{friend.score}</span>
@@ -997,13 +994,7 @@ function DetailsContent() {
                           {scoredFriends.map(friend => (
                             <div key={friend.uid} className={styles.friendBreakdownRow}>
                               <div className={styles.friendAvatarCircle}>
-                                {friend.photoURL ? (
-                                  <img src={friend.photoURL} alt={friend.displayName || friend.username || '?'} className={styles.friendAvatarImg} />
-                                ) : (
-                                  <span className={styles.friendAvatarInitials}>
-                                    {(friend.displayName || friend.username || '?')[0].toUpperCase()}
-                                  </span>
-                                )}
+                                <img src={friend.photoURL || '/images/default-avatar-bg.png'} alt={friend.displayName || friend.username || '?'} className={styles.friendAvatarImg} />
                               </div>
                               <span className={styles.friendBreakdownName}>{friend.displayName || friend.username || 'Unknown'}</span>
                               <span className={styles.friendBreakdownScore}>{friend.primaryScore}</span>

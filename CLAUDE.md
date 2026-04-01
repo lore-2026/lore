@@ -213,6 +213,54 @@ When implementing a Figma design:
 
 ---
 
+# iOS Build & Device Deployment
+
+## Common Issue: Simulator Runtimes Unmounted
+
+`actool` (the asset catalog compiler) requires at least one mounted iOS simulator runtime even when building for a **physical device**. Without it, the build fails with:
+
+```
+error: No available simulator runtimes for platform iphonesimulator.
+SimServiceContext supportedRuntimes=[]
+```
+
+or after a partial fix:
+
+```
+error: No simulator runtime version from ["<build>"] available to use with iphonesimulator SDK version <version>
+```
+
+**Why it happens:** iOS simulator runtimes are downloaded as DMG disk images but get unmounted (e.g. after a restart). The images still appear as "Ready" in `xcrun simctl runtime list` but `xcrun simctl list runtimes` returns empty.
+
+**Fix — run this before building:**
+
+```bash
+xcrun simctl list runtimes
+```
+
+**Step 1:** If the output is empty, trigger CoreSimulatorService to remount the DMGs:
+
+```bash
+xcrun simctl runtime scan-and-mount
+xcrun simctl create "tmp" "iPhone 17" 2>/dev/null
+xcrun simctl list runtimes
+```
+
+**Step 2:** If the mounted runtime build number doesn't match the SDK build number (e.g. runtime is `23D8133` but SDK wants `23E237`), override the mapping:
+
+```bash
+# Check SDK build version
+xcrun --sdk iphonesimulator --show-sdk-build-version
+# Set override to use the available runtime
+xcrun simctl runtime match set iphoneos26.4 <mounted-runtime-build> --sdkBuild <sdk-build>
+# Example:
+xcrun simctl runtime match set iphoneos26.4 23D8133 --sdkBuild 23E237
+```
+
+The override persists until the system is restarted or runtimes are updated.
+
+---
+
 # iOS Port Architecture Reference
 
 > This section documents the full app architecture for porting Lore to native iOS (Swift/SwiftUI). It covers data models, Firebase operations, TMDB API, the rating algorithm, and every screen's interactions.

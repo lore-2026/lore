@@ -263,13 +263,7 @@ export default function ExplorePage() {
                   >
                     <div className={styles.profileCardAvatar}>
                       <div className={styles.profileCardAvatarCircle}>
-                        {item.photoURL ? (
-                          <Image src={item.photoURL} alt="" width={100} height={100} className={styles.profileCardImg} />
-                        ) : (
-                          <span className={styles.profileCardInitials}>
-                            {fullName ? `${fullName.split(' ')[0][0]}${fullName.split(' ')[1]?.[0] || ''}`.toUpperCase() : '?'}
-                          </span>
-                        )}
+                        <Image src={item.photoURL || '/images/default-avatar-bg.png'} alt="" width={100} height={100} className={styles.profileCardImg} />
                       </div>
                     </div>
                     <div className={styles.profileCardInfo}>

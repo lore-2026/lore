@@ -1,2 +1,0 @@
-Target dependency graph (1 target)
-Target 'Lore' in project 'Lore' (no dependencies)

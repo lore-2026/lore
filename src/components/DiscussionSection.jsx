@@ -13,29 +13,6 @@ import { MessageSquare, Pencil, Trash2 } from 'lucide-react';
 import Modal from './Modal';
 import styles from './DiscussionSection.module.css';
 
-const AVATAR_GRADIENTS = [
-  'linear-gradient(135deg, #6b3fa0, #9b5fe0)',
-  'linear-gradient(135deg, #1a6b4a, #2db87a)',
-  'linear-gradient(135deg, #6b1a1a, #e05f5f)',
-  'linear-gradient(135deg, #1a4a6b, #3f8fbf)',
-  'linear-gradient(135deg, #6b4a1a, #bf8f3f)',
-  'linear-gradient(135deg, #3a6b1a, #72bf3f)',
-];
-
-function avatarGradient(uid) {
-  if (!uid) return AVATAR_GRADIENTS[0];
-  let h = 0;
-  for (let i = 0; i < uid.length; i++) h = (h * 31 + uid.charCodeAt(i)) >>> 0;
-  return AVATAR_GRADIENTS[h % AVATAR_GRADIENTS.length];
-}
-
-function getInitials(name) {
-  if (!name) return '?';
-  const parts = name.trim().split(/\s+/);
-  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
-  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
-}
-
 function formatTime(ts) {
   if (!ts) return 'just now';
   const date = ts.toDate ? ts.toDate() : new Date(ts);
@@ -53,15 +30,8 @@ function autoResize(el) {
   el.style.height = `${el.scrollHeight}px`;
 }
 
-function Avatar({ uid, photoURL, username, size = 'md' }) {
-  if (photoURL) {
-    return <img src={photoURL} alt={username} className={styles[`avatar${size}`]} />;
-  }
-  return (
-    <div className={styles[`avatar${size}`]} style={{ background: avatarGradient(uid) }}>
-      {getInitials(username)}
-    </div>
-  );
+function Avatar({ photoURL, username, size = 'md' }) {
+  return <img src={photoURL || '/images/default-avatar-bg.png'} alt={username} className={styles[`avatar${size}`]} />;
 }
 
 export default function DiscussionSection({ mediaKey, mediaTitle, userScore }) {

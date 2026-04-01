@@ -68,6 +68,7 @@ async function run() {
       scoreV2: data.scoreV2 ?? null,
       note: data.note ?? null,
       timestamp: data.timestamp ?? null,
+      genres: data.genres ?? [],
     };
   });
 
@@ -103,9 +104,10 @@ async function run() {
   filtered.forEach((r, idx) => {
     const seasonLabel = r.season == null ? '' : ` S${r.season}`;
     const name = r.mediaName || `<media:${r.mediaId}>`;
+    const genreStr = r.genres.length > 0 ? ` | genres=[${r.genres.join(', ')}]` : '';
     console.log(
       `${String(idx + 1).padStart(3, ' ')}. [${r.mediaType}|${r.sentiment}] ${name}${seasonLabel} | ` +
-      `score=${r.score} | id=${r.id}`
+      `score=${r.score} | id=${r.id}${genreStr}`
     );
   });
 }

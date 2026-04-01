@@ -124,10 +124,7 @@ export default function Navbar() {
                   aria-label="User menu"
                   onClick={() => router.push('/profile')}
                 >
-                  {photoURL
-                    ? <Image src={photoURL} alt="Profile" className={styles.profileCircleImg} width={36} height={36} />
-                    : initials
-                  }
+                  <Image src={photoURL || '/images/default-avatar-bg.png'} alt="Profile" className={styles.profileCircleImg} width={36} height={36} />
                 </button>
                 {userMenuOpen && (
                   <div className={styles.userDropdown} role="menu">

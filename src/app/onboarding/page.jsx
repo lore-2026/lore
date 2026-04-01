@@ -117,7 +117,7 @@ export default function OnboardingPage() {
           lastname,
           fullNameLower: fullNameLower || null,
           email: user.email || null,
-          photoURL: user.photoURL || null,
+          photoURL: null,
           username: trimmed,
           isDeveloper: false,
           createdAt: serverTimestamp(),

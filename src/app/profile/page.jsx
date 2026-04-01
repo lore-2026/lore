@@ -219,10 +219,7 @@ export default function ProfilePage() {
             <div className={styles.userInfoRow}>
               <div className={styles.identifierSection}>
                 <button className={styles.avatarBtn} onClick={handleAvatarClick} disabled={uploading} aria-label="Change profile picture">
-                  {photoURL
-                    ? <Image src={photoURL} alt="Profile" className={styles.avatarImg} width={96} height={96} />
-                    : <span className={styles.avatarInitials}>{fullName ? `${fullName.split(' ')[0][0]}${fullName.split(' ')[1]?.[0] || ''}`.toUpperCase() : '?'}</span>
-                  }
+                  <Image src={photoURL || '/images/default-avatar-bg.png'} alt="Profile" className={styles.avatarImg} width={96} height={96} />
                   <span className={styles.avatarOverlay}>{uploading ? '...' : <i className="fas fa-camera" aria-hidden="true" />}</span>
                 </button>
                 <input ref={fileInputRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={handleFileChange} />
@@ -342,10 +339,7 @@ export default function ProfilePage() {
                       <li key={u.uid}>
                         <Link href={`/user?uid=${u.uid}`} className={styles.modalListRow} onClick={closeListModal}>
                           <div className={styles.modalListAvatar}>
-                            {u.photoURL
-                              ? <Image src={u.photoURL} alt="" width={40} height={40} className={styles.modalListAvatarImg} />
-                              : <span className={styles.modalListInitials}>{name ? `${name.split(' ')[0][0]}${name.split(' ')[1]?.[0] || ''}`.toUpperCase() : '?'}</span>
-                            }
+                            <Image src={u.photoURL || '/images/default-avatar-bg.png'} alt="" width={40} height={40} className={styles.modalListAvatarImg} />
                           </div>
                           <div className={styles.modalListInfo}>
                             <span className={styles.modalListName}>{name}</span>
