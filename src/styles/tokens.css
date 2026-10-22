@@ -57,7 +57,7 @@
   /* ── Layout ───────────────────────────────── */
   --max-width: 1300px;
   --content-max-width: 750px;
-  --navbar-height: 80px;
+  --navbar-height: 68px;
   --page-padding: 50px;
   --page-padding-mobile: 25px;
 
@@ -72,7 +72,7 @@
   --transition-slow: all 0.5s ease;
 
   /* ── Typography ───────────────────────────── */
-  --font-sans: 'Inter', sans-serif;
+  --font-sans: 'Instrument Sans', sans-serif;
   --font-tight: 'Inter Tight', sans-serif;
 
   /* ── Shadows ──────────────────────────────── */

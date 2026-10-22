@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useCallback, Suspense } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState, useCallback, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -16,13 +16,17 @@ import { publicAssetPath } from '../../lib/publicPath';
 import { computeCommunityRatingFromSentiment } from '../../lib/communitySentimentScore';
 import AddToListModal from '../../components/AddToListModal';
 import DiscussionSection from '../../components/DiscussionSection';
-import { Repeat, Trash2, ChevronDown } from 'lucide-react';
+import Modal from '../../components/Modal';
+import { Repeat, Trash2, ChevronDown, CirclePlus } from 'lucide-react';
 import styles from './page.module.css';
 
 /**
  * `users/{uid}.ratingCount` should only reflect movies + whole-show TV ratings.
  * Per-season TV ratings must not change this counter.
  */
+// Starting width for the poster-fitting loop; matches .posterCard in page.module.css
+const POSTER_BASE_WIDTH = 220;
+
 function userRatingCountsTowardProfileTotal(mediaType, season) {
   if (mediaType === 'movie') return true;
   if (mediaType === 'tv') return season == null;
@@ -58,6 +62,7 @@ function DetailsContent() {
   const [cancelled, setCancelled] = useState(false);
   const [existingShowRatings, setExistingShowRatings] = useState([]);
   const [showRatingForm, setShowRatingForm] = useState(false);
+  const [showRateModal, setShowRateModal] = useState(false); // movie rating popup
   const [friendsRatings, setFriendsRatings] = useState(null); // null = not loaded yet
   const [friendsError, setFriendsError] = useState(null);
   const [showBreakdown, setShowBreakdown] = useState(false);
@@ -372,6 +377,83 @@ function DetailsContent() {
     }).catch(() => setDiscussionUsername(authUser.displayName || 'Anonymous'));
   }, [authUser]);
 
+  useEffect(() => {
+    if (ratingPhase === 'done') setShowRateModal(false);
+  }, [ratingPhase]);
+
+  const infoRef = useRef(null);
+  const descriptionRef = useRef(null);
+  const posterRef = useRef(null);
+  const scoreRowRef = useRef(null);
+  useLayoutEffect(() => {
+    const info = infoRef.current;
+    const description = descriptionRef.current;
+    if (!info || !description) return undefined;
+
+    // Movies (desktop): size the poster so its bottom lines up with the bottom of the score
+    // cards, keeping its 2:3 ratio. A wider poster narrows the text column, which can only add
+    // lines, so iterating from the same base width always settles on the same result.
+    const fitPoster = () => {
+      const poster = posterRef.current;
+      const scoreRow = scoreRowRef.current;
+      if (!poster) return;
+      if (mediaType !== 'movie' || !scoreRow || window.matchMedia('(max-width: 960px)').matches) {
+        poster.style.removeProperty('width');
+        return;
+      }
+      // Read exact border widths: offset/client sizes are rounded to whole pixels, which made
+      // the target width drift each pass and re-trigger the resize observer
+      const style = getComputedStyle(poster);
+      const borderX = parseFloat(style.borderLeftWidth) + parseFloat(style.borderRightWidth);
+      const borderY = parseFloat(style.borderTopWidth) + parseFloat(style.borderBottomWidth);
+      let width = POSTER_BASE_WIDTH;
+      const passes = []; // DEBUG-POSTER
+      for (let i = 0; i < 10; i++) {
+        poster.style.width = `${width}px`;
+        const height = scoreRow.getBoundingClientRect().bottom - poster.getBoundingClientRect().top;
+        const next = (height - borderY) * (2 / 3) + borderX;
+        passes.push({ i, width: +width.toFixed(2), height: +height.toFixed(2), next: +next.toFixed(2), descLines: Math.round(description.getBoundingClientRect().height / 22.4) }); // DEBUG-POSTER
+        if (Math.abs(next - width) < 0.5) break;
+        width = next;
+      }
+      poster.style.width = `${width}px`;
+      console.log('[poster-fit] passes', passes, '→ final width', +width.toFixed(2), 'viewport', document.documentElement.clientWidth); // DEBUG-POSTER
+    };
+
+    // Bound the score card row by the description's visible text: if it wraps, use the
+    // leftmost/rightmost pixels of its lines; otherwise fall back to the full info column.
+    const fitScoreRow = () => {
+      const range = document.createRange();
+      range.selectNodeContents(description);
+      // Lines past the 5-line clamp are still laid out (just hidden), so ignore them
+      const visibleBottom = description.getBoundingClientRect().bottom + 1;
+      const lines = [...range.getClientRects()].filter(r => r.width > 0 && r.bottom <= visibleBottom);
+      const lineCount = new Set(lines.map(r => Math.round(r.top))).size;
+      if (lineCount > 1) {
+        const left = Math.min(...lines.map(r => r.left));
+        const right = Math.max(...lines.map(r => r.right));
+        info.style.setProperty('--score-row-offset', `${left - info.getBoundingClientRect().left}px`);
+        info.style.setProperty('--score-row-width', `${right - left}px`);
+      } else {
+        info.style.removeProperty('--score-row-offset');
+        info.style.removeProperty('--score-row-width');
+      }
+    };
+
+    // Poster first: its width changes how the description wraps
+    const measure = (source) => {
+      console.log('[poster-fit] measure triggered by:', typeof source === 'string' ? source : 'resize-observer', 'at', Math.round(performance.now()), 'ms'); // DEBUG-POSTER
+      fitPoster();
+      fitScoreRow();
+    };
+
+    measure('layout-effect');
+    document.fonts?.ready.then(() => measure('fonts-ready'));
+    const observer = new ResizeObserver(() => measure('resize-observer'));
+    observer.observe(description);
+    return () => observer.disconnect();
+  }, [media, loading, mediaType]);
+
   const autoPostDiscussionNote = async (displayScore) => {
     if (!note.trim() || isReranking) return;
     const user = auth.currentUser;
@@ -634,7 +716,26 @@ function DetailsContent() {
     setIsReranking(true);
   };
 
-  const scoredFriends = friendsRatings ? friendsRatings.filter(f => f.primaryScore > 0) : [];
+  const formatScore = (score) => (score == null ? '–' : Number(score).toFixed(1));
+
+  // Placeholder external score — not wired to any data source yet
+  const externalScoresCard = (
+    <div className={styles.ratingColumn}>
+      <div className="eyebrow">Letterboxd</div>
+      <div className={styles.ratingColumnScore}>4.1</div>
+    </div>
+  );
+
+  const hasRated = mediaType === 'tv' ? existingShowRatings.length > 0 : finalScore !== null;
+
+  // Closing mid-comparison starts over next time; don't close while a result is being saved
+  const closeRateModal = () => {
+    if (persistingComparison) return;
+    if (ratingPhase === 'comparing') setRatingPhase('initial');
+    setShowRateModal(false);
+  };
+
+  const scoredFriends = friendsRatings ?friendsRatings.filter(f => f.primaryScore > 0) : [];
   const friendsAvg = scoredFriends.length > 0
     ? Math.round((scoredFriends.reduce((sum, f) => sum + f.primaryScore, 0) / scoredFriends.length) * 10) / 10
     : null;
@@ -819,7 +920,7 @@ function DetailsContent() {
 
       <div className={styles.content}>
         <div className={styles.headerContainer}>
-          <div className={styles.posterCard}>
+          <div className={styles.posterCard} ref={posterRef}>
             <Image src={posterUrl} alt={currentTitle} className={styles.posterCardImage} width={500} height={750} />
             <button
               className={styles.watchlistIconBtn}
@@ -830,7 +931,7 @@ function DetailsContent() {
             </button>
           </div>
 
-          <div className={styles.info}>
+          <div className={styles.info} ref={infoRef}>
             <div className={styles.title}>{currentTitle}</div>
             <div className={styles.metaRow}>
               {year && <span className={styles.metaItem}>{year}</span>}
@@ -840,7 +941,7 @@ function DetailsContent() {
                 <span key={g.id} className={styles.genreBadge}>{g.name}</span>
               ))}
             </div>
-            <div className={styles.description}>{media.overview}</div>
+            <div className={styles.description} ref={descriptionRef}>{media.overview}</div>
             {(director || cast) && (
               <div className={styles.creditsLine}>
                 {director && <><span className={styles.creditsLabel}>Dir.</span><span className={styles.creditsValue}>{director}</span></>}
@@ -849,8 +950,6 @@ function DetailsContent() {
               </div>
             )}
 
-            <hr className={styles.divider} />
-
             {/* Rating box */}
             <div className={styles.ratingBox}>
           {mediaType === 'tv' && existingShowRatings.length > 0 && (
@@ -858,29 +957,20 @@ function DetailsContent() {
               <div className={styles.ratingDone}>
                 <div className={styles.ratingColumn}>
                   <div className="eyebrow">Your avg</div>
-                  <div className={styles.ratingColumnScore}>{tvUserOverall}</div>
-                  <div className={styles.ratingColumnSentiment}>{existingShowRatings.length} {existingShowRatings.length === 1 ? 'rating' : 'ratings'}</div>
+                  <div className={styles.ratingColumnScore}>{formatScore(tvUserOverall)}</div>
                 </div>
-                {friendsAvg != null && (
-                  <>
-                    <div className={styles.ratingColumnDivider} />
-                    <div className={styles.ratingColumn}>
-                      <div className="eyebrow">Friends</div>
-                      <div className={styles.ratingColumnScore}>{friendsAvg}</div>
-                      <div className={styles.ratingColumnSentiment}>{scoredFriends.length} {scoredFriends.length === 1 ? 'rating' : 'ratings'}</div>
-                    </div>
-                  </>
-                )}
-                {communitySentiment && communityRatingScore != null && (
-                  <>
-                    <div className={styles.ratingColumnDivider} />
-                    <div className={`${styles.ratingColumn} ${styles.ratingColumnGrow}`}>
-                      <div className="eyebrow">Community</div>
-                      <div className={styles.ratingColumnScore}>{communityRatingScore}</div>
-                      <div className={styles.ratingColumnSentiment}>{communityRatingCountLabel}</div>
-                    </div>
-                  </>
-                )}
+                <div className={styles.ratingColumn}>
+                  <div className="eyebrow">Friends</div>
+                  <div className={styles.ratingColumnScore}>{formatScore(friendsAvg)}</div>
+                  {scoredFriends.length > 0 && (
+                    <div className={styles.ratingColumnSentiment}>{scoredFriends.length} {scoredFriends.length === 1 ? 'rating' : 'ratings'}</div>
+                  )}
+                </div>
+                <div className={styles.ratingColumn}>
+                  <div className="eyebrow">Community</div>
+                  <div className={styles.ratingColumnScore}>{formatScore(communityRatingScore)}</div>
+                </div>
+                {externalScoresCard}
               </div>
               <div className={styles.breakdownCard}>
               <button className={styles.breakdownCollapsible} onClick={() => setShowBreakdown(v => !v)}>
@@ -908,7 +998,7 @@ function DetailsContent() {
                         <span className={styles.breakdownCell}>
                           {userScore != null ? (
                             <span className={styles.breakdownScoreCell}>
-                              <span className={styles.breakdownScore}>{userScore}</span>
+                              <span className={styles.breakdownScore}>{formatScore(userScore)}</span>
                               <button className={styles.iconActionBtn} onClick={() => handleRerankSeason(season)} aria-label="Re-rank" data-tooltip="Re-rank">
                                 <Repeat size={12} />
                               </button>
@@ -926,7 +1016,7 @@ function DetailsContent() {
                                 onMouseDown={e => e.stopPropagation()}
                                 onClick={() => setOpenFriendDropdownSeason(isOpen ? undefined : season)}
                               >
-                                {friendSeasonAvg}
+                                {formatScore(friendSeasonAvg)}
                                 <ChevronDown size={14} className={isOpen ? styles.chevronOpen : styles.chevronClosed} />
                               </button>
                               {isOpen && friendsForSeason.length > 0 && (
@@ -943,7 +1033,7 @@ function DetailsContent() {
                                         )}
                                       </div>
                                       <span className={styles.friendBreakdownName}>{friend.displayName || friend.username || 'Unknown'}</span>
-                                      <span className={styles.friendBreakdownScore}>{friend.score}</span>
+                                      <span className={styles.friendBreakdownScore}>{formatScore(friend.score)}</span>
                                     </div>
                                   ))}
                                 </div>
@@ -955,7 +1045,7 @@ function DetailsContent() {
                           {season === null && communitySentiment && communityRatingScore != null
                             ? (
                               <span className={styles.breakdownScore} title={communityRatingCountLabel}>
-                                {communityRatingScore}
+                                {formatScore(communityRatingScore)}
                               </span>
                               )
                             : <span className={styles.breakdownEmpty}>–</span>}
@@ -974,67 +1064,40 @@ function DetailsContent() {
               Rate another season
             </button>
           )}
-          {cancelled ? (
-            <p className={styles.resultText}>Ok! Come back when you&apos;ve watched it.</p>
-          ) : ratingPhase === 'done' && mediaType !== 'tv' ? (
+          {/* Movie score cards always show (empty until rated) so the poster can align to them */}
+          {mediaType !== 'tv' && (
             <>
-              <div className={styles.ratingDone}>
-                <div className={styles.ratingColumn}>
-                  <div className="eyebrow">Your rating</div>
-                  <div className={styles.ratingColumnScore}>{finalScore}</div>
-                  <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-                    <button className={styles.iconActionBtn} onClick={handleRerank} aria-label="Re-rank" data-tooltip="Re-rank">
-                      <Repeat size={14} />
-                    </button>
-                    <button className={styles.iconActionBtnDanger} onClick={handleDeleteRatingClick} aria-label="Remove rating" data-tooltip="Remove rating">
-                      <Trash2 size={14} />
-                    </button>
+              <div className={styles.ratingDone} ref={scoreRowRef}>
+                {finalScore === null ? (
+                  <button
+                    type="button"
+                    className={`${styles.ratingColumn} ${styles.ratingColumnButton}`}
+                    onClick={() => setShowRateModal(true)}
+                    aria-label={`Rate this ${displayType}`}
+                  >
+                    <div className="eyebrow">Your rating</div>
+                    <div className={styles.ratingColumnScore}><CirclePlus size={32} strokeWidth={1.5} /></div>
+                  </button>
+                ) : (
+                  <div className={styles.ratingColumn}>
+                    <div className="eyebrow">Your rating</div>
+                    <div className={styles.ratingColumnScore}>{formatScore(finalScore)}</div>
                   </div>
+                )}
+                <div className={styles.ratingColumn}>
+                  <div className="eyebrow">Friends</div>
+                  <div className={styles.ratingColumnScore}>{formatScore(friendsAvg)}</div>
                 </div>
-                {friendsAvg != null && (
-                  <>
-                    <div className={styles.ratingColumnDivider} />
-                    <div className={styles.ratingColumn} style={{ position: 'relative' }}>
-                      <div className="eyebrow">Friends</div>
-                      <div className={styles.ratingColumnScore}>{friendsAvg}</div>
-                      <button className={styles.friendsCountToggle} onClick={() => setShowBreakdown(v => !v)}>
-                        {scoredFriends.length} {scoredFriends.length === 1 ? 'rating' : 'ratings'}
-                        <ChevronDown size={12} className={showBreakdown ? styles.chevronOpen : styles.chevronClosed} />
-                      </button>
-                      {showBreakdown && (
-                        <div className={styles.friendsBreakdownList}>
-                          {scoredFriends.map(friend => (
-                            <div key={friend.uid} className={styles.friendBreakdownRow}>
-                              <div className={styles.friendAvatarCircle}>
-                                {friend.avatarUrl ? (
-                                  <img src={friend.avatarUrl} alt={friend.displayName || friend.username || '?'} className={styles.friendAvatarImg} />
-                                ) : (
-                                  <span className={styles.friendAvatarInitials}>
-                                    {(friend.displayName || friend.username || '?')[0].toUpperCase()}
-                                  </span>
-                                )}
-                              </div>
-                              <span className={styles.friendBreakdownName}>{friend.displayName || friend.username || 'Unknown'}</span>
-                              <span className={styles.friendBreakdownScore}>{friend.primaryScore}</span>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  </>
-                )}
-                {communitySentiment && communityRatingScore != null && (
-                  <>
-                    <div className={styles.ratingColumnDivider} />
-                    <div className={`${styles.ratingColumn} ${styles.ratingColumnGrow}`}>
-                      <div className="eyebrow">Community</div>
-                      <div className={styles.ratingColumnScore}>{communityRatingScore}</div>
-                      <div className={styles.ratingColumnSentiment}>{communityRatingCountLabel}</div>
-                    </div>
-                  </>
-                )}
+                <div className={styles.ratingColumn}>
+                  <div className="eyebrow">Community</div>
+                  <div className={styles.ratingColumnScore}>{formatScore(communityRatingScore)}</div>
+                </div>
+                {externalScoresCard}
               </div>
             </>
+          )}
+          {mediaType !== 'tv' ? null : cancelled ? (
+            <p className={styles.resultText}>Ok! Come back when you&apos;ve watched it.</p>
           ) : ratingPhase === 'comparing' ? (
             <>
               <h3>Which did you like more?</h3>
@@ -1124,14 +1187,69 @@ function DetailsContent() {
         </div>
       </div>
 
-      {(mediaType === 'tv' ? existingShowRatings.length > 0 : finalScore !== null) && (
-        <div className={styles.discussionWrapper}>
-          <DiscussionSection
-            mediaKey={`${mediaType}_${id}`}
-            mediaTitle={currentTitle}
-            userScore={mediaType === 'tv' ? tvUserOverall : finalScore}
-          />
-        </div>
+      <div className={styles.discussionWrapper}>
+        <DiscussionSection
+          key={hasRated ? 'rated' : 'unrated'}
+          mediaKey={`${mediaType}_${id}`}
+          mediaTitle={currentTitle}
+          userScore={mediaType === 'tv' ? tvUserOverall : finalScore}
+          canPost={hasRated}
+        />
+      </div>
+
+      {showRateModal && mediaType !== 'tv' && (
+        <Modal
+          title={ratingPhase === 'comparing' ? 'Which did you like more?' : `How would you rate this ${displayType}?`}
+          onClose={closeRateModal}
+          maxWidth="520px"
+          actions={ratingPhase === 'comparing' ? [] : [
+            { label: 'Cancel', onClick: closeRateModal, variant: 'secondary' },
+            { label: 'Next', onClick: handleNext, disabled: !selectedSentiment },
+          ]}
+        >
+          {ratingPhase === 'comparing' ? (
+            <>
+              <div className={styles.comparisonButtons}>
+                <button className={styles.compareBtn} onClick={() => handleComparison(true)} disabled={persistingComparison}>
+                  {currentTitle}
+                </button>
+                <button className={styles.compareBtn} onClick={() => handleComparison(false)} disabled={persistingComparison}>
+                  {compareTitle}
+                </button>
+              </div>
+              <button className={styles.skipLink} onClick={handleSkip} disabled={persistingComparison}>
+                Too tough, skip
+              </button>
+            </>
+          ) : (
+            <>
+              <div className={styles.ratingOptions}>
+                {[
+                  { value: 'not-good', label: 'Not good', emoji: '😒' },
+                  { value: 'okay', label: 'Okay', emoji: '😐' },
+                  { value: 'good', label: 'Good', emoji: '😊' },
+                  { value: 'amazing', label: 'Amazing', emoji: '😍' },
+                ].map(({ value, label, emoji }) => (
+                  <button
+                    key={value}
+                    className={selectedSentiment === value ? styles.ratingButtonSelected : styles.ratingButton}
+                    onClick={() => setSelectedSentiment(value)}
+                  >
+                    <span className={styles.ratingLabel}>{label}</span>
+                    <span className={styles.ratingEmoji}>{emoji}</span>
+                  </button>
+                ))}
+              </div>
+              <textarea
+                placeholder="Leave an optional note for your review"
+                className={styles.noteInput}
+                value={note}
+                onChange={(e) => setNote(e.target.value)}
+                rows={3}
+              />
+            </>
+          )}
+        </Modal>
       )}
 
       {showDeleteConfirm && (

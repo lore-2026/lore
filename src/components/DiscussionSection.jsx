@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useLayoutEffect, useRef } from 'react';
 import {
   collection, query, orderBy, limit, getDocs, addDoc,
   updateDoc, deleteDoc, doc, arrayUnion, arrayRemove, serverTimestamp,
@@ -9,8 +9,9 @@ import {
 import { db } from '../lib/firebase';
 import { useAuth } from '../contexts/AuthContext';
 import Link from 'next/link';
-import { MessageSquare, Pencil, Trash2 } from 'lucide-react';
+import { Heart, MessageSquare, Pencil, Trash2 } from 'lucide-react';
 import Modal from './Modal';
+import { buildPublicFirebaseDownloadUrl } from '../lib/firebaseStorageUrl';
 import styles from './DiscussionSection.module.css';
 
 const AVATAR_GRADIENTS = [
@@ -36,9 +37,18 @@ function getInitials(name) {
   return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
 }
 
+// createdAt arrives in several shapes: a Firestore Timestamp (web), a Unix time in seconds
+// (written by the iOS app), a {seconds} object, or an ISO string
+function toDate(ts) {
+  if (ts.toDate) return ts.toDate();
+  if (typeof ts === 'number') return new Date(ts < 1e11 ? ts * 1000 : ts);
+  if (typeof ts === 'object' && typeof ts.seconds === 'number') return new Date(ts.seconds * 1000);
+  return new Date(ts);
+}
+
 function formatTime(ts) {
   if (!ts) return 'just now';
-  const date = ts.toDate ? ts.toDate() : new Date(ts);
+  const date = toDate(ts);
   const diff = (Date.now() - date.getTime()) / 1000;
   if (diff < 60) return 'just now';
   if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
@@ -53,9 +63,70 @@ function autoResize(el) {
   el.style.height = `${el.scrollHeight}px`;
 }
 
-function Avatar({ uid, photoURL, username, size = 'md' }) {
-  if (photoURL) {
-    return <img src={photoURL} alt={username} className={styles[`avatar${size}`]} />;
+function fullNameOf(profile) {
+  return [profile?.firstname, profile?.lastname].filter(Boolean).join(' ').trim();
+}
+
+// Name in bold with "@username" on a second line; falls back to just the username until
+// (or unless) the author's real name is known
+function AuthorName({ name, username, nameClass, handleClass }) {
+  if (!name) return <span className={nameClass}>{username}</span>;
+  return (
+    <span className={styles.authorText}>
+      <span className={nameClass}>{name}</span>
+      <span className={handleClass}>@{username}</span>
+    </span>
+  );
+}
+
+// Holds the like button centered under the score box at the start of the review. An invisible
+// copy of the score gives the slot the same width as that box, so the centers line up
+function LikeSlot({ score, children }) {
+  const slotRef = useRef(null);
+  const sizerRef = useRef(null);
+
+  // Push the button right by half the width difference so its center sits under the score box's
+  // center. The slot is only as wide as that offset plus the button, so nothing extra is added
+  // to the gap before the next button.
+  useLayoutEffect(() => {
+    const slot = slotRef.current;
+    const sizer = sizerRef.current;
+    const button = slot?.querySelector('button');
+    if (!slot || !sizer || !button) return undefined;
+    const measure = () => {
+      slot.style.paddingLeft = `${Math.max(0, (sizer.offsetWidth - button.offsetWidth) / 2)}px`;
+    };
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(sizer);
+    observer.observe(button);
+    return () => observer.disconnect();
+  }, [score]);
+
+  return (
+    <span ref={slotRef} className={styles.likeSlot}>
+      {score != null && (
+        <span ref={sizerRef} className={styles.likeSlotSizer} aria-hidden="true">{Number(score).toFixed(1)}</span>
+      )}
+      {children}
+    </span>
+  );
+}
+
+function Avatar({ uid, username, size = 'md' }) {
+  // The user's thumbnail in Storage; initials if it's missing or fails to load
+  const [failed, setFailed] = useState(false);
+  const bucket = process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET;
+  if (uid && bucket && !failed) {
+    return (
+      <img
+        src={buildPublicFirebaseDownloadUrl(bucket, `avatars/${uid}/thumb`)}
+        alt={username}
+        className={styles[`avatar${size}`]}
+        referrerPolicy="no-referrer"
+        onError={() => setFailed(true)}
+      />
+    );
   }
   return (
     <div className={styles[`avatar${size}`]} style={{ background: avatarGradient(uid) }}>
@@ -64,7 +135,7 @@ function Avatar({ uid, photoURL, username, size = 'md' }) {
   );
 }
 
-export default function DiscussionSection({ mediaKey, mediaTitle, userScore }) {
+export default function DiscussionSection({ mediaKey, mediaTitle, userScore, canPost = true }) {
   const { user: authUser, initials: authInitials, photoURL: authPhotoURL } = useAuth();
 
   const [tab, setTab] = useState('friends');
@@ -97,6 +168,24 @@ export default function DiscussionSection({ mediaKey, mediaTitle, userScore }) {
       setFollowingList(data.followinglist || []);
     }).catch(() => setCurrentUsername(authUser.displayName || 'Anonymous'));
   }, [authUser]);
+
+  // Thread/reply docs only store the username, so look up each author's real name once
+  const [authorNames, setAuthorNames] = useState({}); // uid -> "First Last" ('' if unknown)
+  useEffect(() => {
+    const uids = new Set(threads.map(t => t.uid));
+    Object.values(repliesData).forEach(list => list.forEach(r => uids.add(r.uid)));
+    const missing = [...uids].filter(uid => uid && !(uid in authorNames));
+    if (missing.length === 0) return undefined;
+    let cancelled = false;
+    Promise.all(missing.map(uid =>
+      getDoc(doc(db, 'users', uid))
+        .then(snap => [uid, snap.exists() ? fullNameOf(snap.data()) : ''])
+        .catch(() => [uid, ''])
+    )).then(entries => {
+      if (!cancelled) setAuthorNames(prev => ({ ...prev, ...Object.fromEntries(entries) }));
+    });
+    return () => { cancelled = true; };
+  }, [threads, repliesData, authorNames]);
 
   const loadThreads = useCallback(async () => {
     setThreadsLoading(true);
@@ -352,9 +441,6 @@ export default function DiscussionSection({ mediaKey, mediaTitle, userScore }) {
       <div className={styles.header}>
         <div>
           <span className={styles.title}>Discussion</span>
-          {!threadsLoading && (
-            <span className={styles.count}>{threads.length} {threads.length === 1 ? 'thread' : 'threads'}</span>
-          )}
         </div>
         <div className={styles.sortTabs}>
           {['Friends', 'All'].map(t => (
@@ -369,14 +455,13 @@ export default function DiscussionSection({ mediaKey, mediaTitle, userScore }) {
         </div>
       </div>
 
-      {authUser && !showComposer && (
+      {canPost && authUser && !showComposer && (
         <div className={styles.newPostBar} onClick={() => setShowComposer(true)}>
-          <Avatar uid={authUser.uid} photoURL={authPhotoURL} username={currentUsername || authInitials} size="md" />
           <span className={styles.newPostPlaceholder}>Share a take on {mediaTitle}…</span>
         </div>
       )}
 
-      {authUser && showComposer && (
+      {canPost && authUser && showComposer && (
         <div className={styles.composer}>
           <textarea
             className={styles.composerInput}
@@ -421,29 +506,19 @@ export default function DiscussionSection({ mediaKey, mediaTitle, userScore }) {
 
           return (
             <div key={thread.id} className={styles.thread}>
-              <div className={styles.voteCol}>
-                <button
-                  className={`${styles.voteBtn} ${isVoted ? styles.voteBtnActive : ''}`}
-                  onClick={() => handleVoteThread(thread.id)}
-                  disabled={!authUser}
-                >
-                  🥕
-                </button>
-                <span className={`${styles.voteCount} ${isVoted ? styles.voteCountActive : ''}`}>
-                  {thread.voteCount || 0}
-                </span>
-              </div>
-
               <div className={styles.threadBody}>
                 <div className={styles.threadMeta}>
                   <Link href={`/user?uid=${thread.uid}`} className={styles.authorLink}>
-                    <Avatar uid={thread.uid} photoURL={thread.photoURL} username={thread.username} size="sm" />
-                    <span className={styles.threadAuthor}>{thread.username}</span>
+                    <Avatar uid={thread.uid} username={authorNames[thread.uid] || thread.username} size="lg" />
+                    <AuthorName
+                      name={authorNames[thread.uid]}
+                      username={thread.username}
+                      nameClass={styles.threadAuthor}
+                      handleClass={styles.threadHandle}
+                    />
                   </Link>
+                  <span className={styles.metaDot} aria-hidden="true" />
                   <span className={styles.threadTime}>{formatTime(thread.createdAt)}</span>
-                  {thread.userScore != null && (
-                    <span className={styles.ratingBadge}>{thread.userScore}</span>
-                  )}
                 </div>
 
                 {editingThread === thread.id ? (
@@ -460,10 +535,26 @@ export default function DiscussionSection({ mediaKey, mediaTitle, userScore }) {
                     </div>
                   </div>
                 ) : (
-                  <p className={styles.threadText}>{thread.text}</p>
+                  <p className={styles.threadText}>
+                    {thread.userScore != null && (
+                      <span className={styles.scoreTag}>{Number(thread.userScore).toFixed(1)}</span>
+                    )}
+                    {thread.text}
+                  </p>
                 )}
 
                 <div className={styles.threadActions}>
+                  <LikeSlot score={thread.userScore}>
+                    <button
+                      className={`${styles.threadActionBtn} ${isVoted ? styles.likeBtnActive : ''}`}
+                      onClick={() => handleVoteThread(thread.id)}
+                      disabled={!authUser}
+                      aria-pressed={!!isVoted}
+                    >
+                      <Heart size={13} fill={isVoted ? 'currentColor' : 'none'} />
+                      {thread.voteCount || 0}
+                    </button>
+                  </LikeSlot>
                   <button className={styles.threadActionBtn} onClick={() => toggleReplies(thread.id)}>
                     <MessageSquare size={13} />
                     {thread.replyCount || 0} {repliesOpen ? '· hide' : 'replies'}
@@ -491,28 +582,18 @@ export default function DiscussionSection({ mediaKey, mediaTitle, userScore }) {
                       const isReplyVoted = authUser && (reply.upvoterUids || []).includes(authUser.uid);
                       return (
                         <div key={reply.id} className={styles.reply}>
-                          <div className={styles.replyVoteCol}>
-                            <button
-                              className={`${styles.replyVoteBtn} ${isReplyVoted ? styles.voteBtnActive : ''}`}
-                              onClick={() => handleVoteReply(thread.id, reply.id)}
-                              disabled={!authUser}
-                            >
-                              🥕
-                            </button>
-                            <span className={`${styles.replyVoteCount} ${isReplyVoted ? styles.voteCountActive : ''}`}>
-                              {reply.voteCount || 0}
-                            </span>
-                          </div>
                           <div className={styles.replyBody}>
                             <div className={styles.replyMeta}>
                               <Link href={`/user?uid=${reply.uid}`} className={styles.authorLink}>
-                                <Avatar uid={reply.uid} photoURL={reply.photoURL} username={reply.username} size="xs" />
-                                <span className={styles.replyAuthor}>{reply.username}</span>
+                                <Avatar uid={reply.uid} username={authorNames[reply.uid] || reply.username} size="md" />
+                                <AuthorName
+                                  name={authorNames[reply.uid]}
+                                  username={reply.username}
+                                  nameClass={styles.replyAuthor}
+                                  handleClass={styles.replyHandle}
+                                />
                               </Link>
                               <span className={styles.replyTime}>{formatTime(reply.createdAt)}</span>
-                              {reply.userScore != null && (
-                                <span className={`${styles.ratingBadge} ${styles.ratingBadgeSm}`}>{reply.userScore}</span>
-                              )}
                             </div>
                             {editingReply?.replyId === reply.id ? (
                               <div className={styles.inlineEdit}>
@@ -528,9 +609,25 @@ export default function DiscussionSection({ mediaKey, mediaTitle, userScore }) {
                                 </div>
                               </div>
                             ) : (
-                              <p className={styles.replyText}>{reply.text}</p>
+                              <p className={styles.replyText}>
+                                {reply.userScore != null && (
+                                  <span className={styles.scoreTag}>{Number(reply.userScore).toFixed(1)}</span>
+                                )}
+                                {reply.text}
+                              </p>
                             )}
                             <div className={styles.replyActions}>
+                              <LikeSlot score={reply.userScore}>
+                                <button
+                                  className={`${styles.replyActionBtn} ${styles.replyLikeBtn} ${isReplyVoted ? styles.likeBtnActive : ''}`}
+                                  onClick={() => handleVoteReply(thread.id, reply.id)}
+                                  disabled={!authUser}
+                                  aria-pressed={!!isReplyVoted}
+                                >
+                                  <Heart size={11} fill={isReplyVoted ? 'currentColor' : 'none'} />
+                                  {reply.voteCount || 0}
+                                </button>
+                              </LikeSlot>
                               {authUser && (
                                 <button className={styles.replyActionBtn} onClick={() => openReplyComposerFor(thread.id)}>
                                   Reply
@@ -554,7 +651,7 @@ export default function DiscussionSection({ mediaKey, mediaTitle, userScore }) {
 
                     {replyComposerOpen && (
                       <div className={styles.replyComposer}>
-                        <Avatar uid={authUser?.uid} photoURL={authPhotoURL} username={currentUsername || authInitials} size="xs" />
+                        <Avatar uid={authUser?.uid} username={currentUsername || authInitials} size="xs" />
                         <div className={styles.replyComposerInputWrap}>
                           <textarea
                             className={styles.replyInput}

@@ -72,6 +72,9 @@
 
 .posterCardImage {
   width: 100%;
+  height: auto;
+  aspect-ratio: 2 / 3;
+  object-fit: cover;
   display: block;
 }
 
@@ -146,6 +149,8 @@
 
 /* Info section */
 .info {
+  flex: 1;
+  min-width: 0;
   display: flex;
   flex-direction: column;
   gap: var(--space-3);
@@ -193,7 +198,11 @@
 }
 
 .description {
-  max-width: 560px;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 5;
+  line-clamp: 5;
+  overflow: hidden;
   color: var(--color-text-secondary);
   line-height: 160%;
   font-weight: 300;
@@ -273,10 +282,15 @@
   display: flex;
   flex-direction: column;
   gap: var(--space-4);
+  margin-top: var(--space-3);
   color: var(--color-text-default);
   border-radius: 16px;
-  border: 1px solid transparent;
   z-index: 100;
+}
+
+/* Score cards span the full text column; the rating form and breakdown stay narrower */
+.ratingBox > :not(.ratingDone) {
+  max-width: 560px;
 }
 
 .ratingBox h3 {
@@ -444,36 +458,34 @@
   font-family: var(--font-sans);
 }
 
-.divider {
-  border: none;
-  border-top: 1px solid var(--color-border-secondary);
-  margin: var(--space-4) 0;
-}
-
 .resultText {
   color: var(--color-text-default);
   font-weight: 300;
 }
 
+/* Width/offset are set from the description's measured text bounds in page.jsx */
 .ratingDone {
+  width: var(--score-row-width, auto);
+  margin-left: var(--score-row-offset, 0);
   display: flex;
-  gap: 0;
-  align-items: stretch;
+  justify-content: space-evenly;
+  align-items: flex-start;
 }
 
-.ratingColumnDivider {
-  width: 1px;
-  align-self: stretch;
-  background: var(--color-border-secondary);
-  margin: 0 var(--space-8);
-  flex-shrink: 0;
-}
-
+/* Card styling matches the discussion "Share a take" bar */
 .ratingColumn {
+  flex: 0 0 128px;
+  min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: var(--space-1);
-  padding-right: var(--space-8);
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4) var(--space-6);
+  background: var(--color-surface-contrast);
+  border: 1px solid var(--color-border-default);
+  border-radius: 12px;
 }
 
 .ratingColumnScore {
@@ -481,7 +493,25 @@
   font-weight: 700;
   color: var(--color-text-default);
   line-height: 1;
-  margin-bottom: var(--space-2);
+}
+
+.ratingColumnButton {
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+  transition: var(--transition-fast);
+}
+
+.ratingColumnButton:hover {
+  background: var(--color-surface-hovered);
+}
+
+/* Same 40px height as a score, so the box matches the others */
+.ratingColumnButton .ratingColumnScore {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 40px;
 }
 
 .ratingColumnSentiment {
@@ -496,22 +526,6 @@
   align-items: center;
   gap: 12px;
   margin-top: auto;
-}
-
-.ratingColumnGrow {
-  flex: 1;
-}
-
-.ratingColumnDivider {
-  width: 1px;
-  align-self: stretch;
-  background: var(--color-border-secondary);
-  margin: 0 var(--space-8);
-  flex-shrink: 0;
-}
-
-.ratingColumnGrow {
-  flex: 1;
 }
 
 .breakdownCard {
@@ -911,26 +925,6 @@
 
 /* ── Season dropdown ─────────────────────────── */
 
-/* ── Friends count toggle (inline in rating column) ─── */
-.friendsCountToggle {
-  display: flex;
-  align-items: center;
-  gap: var(--space-1);
-  background: none;
-  border: none;
-  color: var(--color-text-secondary);
-  font-size: 15px;
-  font-weight: 300;
-  font-family: var(--font-sans);
-  cursor: pointer;
-  padding: 0;
-  transition: color 0.15s ease;
-}
-
-.friendsCountToggle:hover {
-  color: var(--color-text-default);
-}
-
 /* ── Friends breakdown list (movie) ─── */
 .friendsBreakdownList {
   position: absolute;
@@ -1061,6 +1055,21 @@
 
   .title {
     font-size: clamp(24px, 7vw, 42px);
+  }
+
+  .ratingDone {
+    width: auto;
+    margin-left: 0;
+    flex-wrap: wrap;
+    gap: var(--space-3);
+    padding: 0 var(--space-3);
+  }
+
+  /* 2×2 grid on mobile */
+  .ratingColumn {
+    flex: 1 1 calc(50% - var(--space-3) / 2);
+    height: auto;
+    aspect-ratio: 1;
   }
 
   .ratingColumnScore {

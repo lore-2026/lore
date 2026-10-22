@@ -7,7 +7,7 @@
 - **Auth/DB:** Firebase Auth + Firestore (project: `lore-f5f5a`)
 - **Media data:** TMDB API
 - **Icons:** lucide-react + Font Awesome (CDN)
-- **Fonts:** Inter (body), Inter Tight (display) — Google Fonts
+- **Fonts:** Instrument Sans (body), Inter Tight (display) — Google Fonts
 
 ---
 
@@ -56,7 +56,7 @@ All tokens live in **`src/styles/tokens.css`** — imported once via `globals.cs
 ```css
 --max-width: 1300px;
 --content-max-width: 750px;
---navbar-height: 80px;
+--navbar-height: 68px;
 --page-padding: 50px;          /* desktop */
 --page-padding-mobile: 25px;   /* ≤960px */
 ```
@@ -77,7 +77,7 @@ All tokens live in **`src/styles/tokens.css`** — imported once via `globals.cs
 
 ### Typography
 ```css
---font-sans: 'Inter', sans-serif;
+--font-sans: 'Instrument Sans', sans-serif;
 --font-tight: 'Inter Tight', sans-serif;
 ```
 

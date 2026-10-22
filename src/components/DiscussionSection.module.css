@@ -1,8 +1,8 @@
 .section {
-  margin-top: var(--space-12);
-  padding-top: var(--space-12);
+  margin-top: var(--space-9);
+  padding-top: var(--space-7);
   padding-bottom: var(--space-12);
-  border-top: 1px solid var(--color-border-secondary);
+  border-top: 2px solid var(--color-border-default);
 }
 
 /* ── Header ── */
@@ -17,13 +17,6 @@
   font-size: 18px;
   font-weight: 600;
   color: var(--color-text-default);
-}
-
-.count {
-  font-size: 13px;
-  color: var(--color-text-secondary);
-  margin-left: var(--space-2);
-  font-weight: 400;
 }
 
 .sortTabs {
@@ -172,7 +165,12 @@
   display: flex;
   gap: var(--space-3);
   padding: var(--space-5) 0;
-  border-bottom: 1px solid var(--color-border-secondary);
+  border-bottom: 1px solid var(--color-border-default);
+}
+
+/* The post box above already provides the 24px gap, so the first entry adds no top padding */
+.threadList > .thread:first-child {
+  padding-top: 0;
 }
 
 .thread:last-child {
@@ -180,55 +178,6 @@
 }
 
 /* ── Vote column ── */
-.voteCol {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: var(--space-1);
-  flex-shrink: 0;
-  width: 32px;
-  padding-top: 2px;
-}
-
-.voteBtn {
-  background: none;
-  border: none;
-  padding: var(--space-1);
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: var(--radius-sm);
-  font-size: 16px;
-  filter: grayscale(1);
-  opacity: 0.45;
-  transition: var(--transition-fast);
-}
-
-.voteBtn:hover:not(:disabled) {
-  opacity: 0.75;
-}
-
-.voteBtn:disabled {
-  cursor: default;
-}
-
-.voteBtnActive {
-  filter: grayscale(0) !important;
-  opacity: 1 !important;
-}
-
-.voteCount {
-  font-size: 11px;
-  font-weight: 600;
-  color: var(--color-icon-tertiary);
-  transition: var(--transition-fast);
-}
-
-.voteCountActive {
-  color: var(--color-text-default);
-}
-
 /* ── Thread body ── */
 .threadBody {
   flex: 1;
@@ -239,14 +188,14 @@
   display: flex;
   align-items: center;
   gap: var(--space-2);
-  margin-bottom: var(--space-2);
+  margin-bottom: var(--space-3);
   flex-wrap: wrap;
 }
 
 .authorLink {
   display: flex;
   align-items: center;
-  gap: var(--space-2);
+  gap: var(--space-4);
   text-decoration: none;
   color: inherit;
   transition: var(--transition-fast);
@@ -254,13 +203,33 @@
 
 .authorLink:hover .threadAuthor,
 .authorLink:hover .replyAuthor {
-  color: var(--color-text-secondary);
+  color: var(--color-text-default);
+}
+
+.authorText {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
 }
 
 .threadAuthor {
   font-size: 13px;
-  font-weight: 500;
-  color: var(--color-text-default);
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.threadHandle {
+  font-size: 12px;
+  font-weight: 400;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.metaDot {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--color-icon-tertiary);
+  flex-shrink: 0;
 }
 
 .threadTime {
@@ -268,26 +237,37 @@
   color: var(--color-icon-tertiary);
 }
 
-.ratingBadge {
+.likeSlot {
+  position: relative;
   display: inline-flex;
-  align-items: center;
-  padding: 2px var(--space-2);
-  background: var(--color-surface-hovered);
+}
+
+/* Invisible copy of the score box (same padding, border and font), used only to read its width */
+.likeSlotSizer {
+  position: absolute;
+  visibility: hidden;
+  pointer-events: none;
+  white-space: nowrap;
+  padding: 0 var(--space-2);
+  border: 1px solid transparent;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.scoreTag {
+  display: inline-block;
+  margin-right: var(--space-2);
+  padding: 0 var(--space-2);
+  background: var(--color-surface-contrast);
   border: 1px solid var(--color-border-default);
-  border-radius: 999px;
-  font-size: 12px;
+  border-radius: var(--radius-sm);
   font-weight: 700;
   color: var(--color-text-default);
 }
 
-.ratingBadgeSm {
-  font-size: 12px;
-  padding: 1px var(--space-1);
-}
-
 .threadText {
   font-size: 14px;
-  color: var(--color-text-default);
+  color: var(--color-text-secondary);
   line-height: 1.6;
   margin: 0 0 var(--space-3);
 }
@@ -316,6 +296,15 @@
   color: var(--color-text-secondary);
 }
 
+.threadActionBtn:disabled {
+  cursor: default;
+}
+
+.likeBtnActive,
+.likeBtnActive:hover {
+  color: #ff3b5c;
+}
+
 .threadActionBtnDanger:hover {
   color: #c00f0c !important;
 }
@@ -338,46 +327,6 @@
   border-bottom: none;
 }
 
-.replyVoteCol {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 2px;
-  flex-shrink: 0;
-  width: 24px;
-  padding-top: 2px;
-}
-
-.replyVoteBtn {
-  background: none;
-  border: none;
-  padding: 3px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: var(--radius-sm);
-  font-size: 13px;
-  filter: grayscale(1);
-  opacity: 0.45;
-  transition: var(--transition-fast);
-}
-
-.replyVoteBtn:hover:not(:disabled) {
-  opacity: 0.75;
-}
-
-.replyVoteBtn:disabled {
-  cursor: default;
-}
-
-.replyVoteCount {
-  font-size: 10px;
-  font-weight: 600;
-  color: var(--color-icon-tertiary);
-  transition: var(--transition-fast);
-}
-
 .replyBody {
   flex: 1;
   min-width: 0;
@@ -386,15 +335,21 @@
 .replyMeta {
   display: flex;
   align-items: center;
-  gap: var(--space-2);
+  gap: var(--space-4);
   margin-bottom: var(--space-1);
   flex-wrap: wrap;
 }
 
 .replyAuthor {
   font-size: 12px;
-  font-weight: 500;
-  color: var(--color-text-default);
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.replyHandle {
+  font-size: 11px;
+  font-weight: 400;
+  color: rgba(255, 255, 255, 0.7);
 }
 
 .replyTime {
@@ -404,8 +359,8 @@
 
 .replyText {
   font-size: 14px;
-  color: var(--color-text-default);
-  line-height: 1.55;
+  color: var(--color-text-secondary);
+  line-height: 1.6;
   margin: 0 0 var(--space-1);
 }
 
@@ -423,6 +378,16 @@
   padding: var(--space-1) 0;
   font-family: var(--font-sans);
   transition: var(--transition-fast);
+}
+
+.replyLikeBtn {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.replyActionBtn:disabled {
+  cursor: default;
 }
 
 .replyActionBtn:hover {
@@ -530,8 +495,8 @@
 }
 
 /* ── Avatars ── */
+.avatarlg,
 .avatarmd,
-.avatarsm,
 .avatarxs {
   border-radius: 50%;
   flex-shrink: 0;
@@ -544,15 +509,15 @@
 }
 
 .avatarmd {
-  width: 28px;
-  height: 28px;
-  font-size: 10px;
+  width: 34px;
+  height: 34px;
+  font-size: 12px;
 }
 
-.avatarsm {
-  width: 22px;
-  height: 22px;
-  font-size: 9px;
+.avatarlg {
+  width: 43px;
+  height: 43px;
+  font-size: 14px;
 }
 
 .avatarxs {
@@ -563,11 +528,6 @@
 }
 
 @media screen and (max-width: 960px) {
-  .section {
-    margin-top: var(--space-8);
-    padding-top: var(--space-8);
-  }
-
   .sortTabs {
     gap: 2px;
   }

@@ -52,7 +52,7 @@
 }
 
 .navbarLinks {
-  color: var(--color-link-default);
+  color: var(--color-text-secondary);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -60,11 +60,11 @@
   height: 100%;
   font-weight: 500;
   width: fit-content;
-  transition: var(--transition-base);
+  transition: all 0.15s ease;
 }
 
 .navbarLinks:hover {
-  color: var(--color-text-secondary);
+  color: var(--color-link-default);
 }
 
 .navRight {
@@ -112,6 +112,8 @@
 }
 
 .profileCircle {
+  position: relative;
+  z-index: 1;
   width: 36px;
   height: 36px;
   border-radius: 50%;
@@ -128,13 +130,15 @@
   font-family: inherit;
 }
 
-.userMenuWrapper::after {
+/* Invisible hover strip from the top of the photo down to where the dropdown starts, reaching
+   30px left of the photo. The photo sits above it so it stays clickable. */
+.userMenuWrapper::before {
   content: '';
   position: absolute;
-  top: 100%;
-  left: 0;
+  top: 0;
+  left: -30px;
   right: 0;
-  height: 8px;
+  height: calc(100% + 8px);
 }
 
 .userDropdown {
@@ -152,6 +156,17 @@
   flex-direction: column;
 }
 
+/* Invisible 10px strip to the right of the photo, from the photo's top (36px photo + 8px gap
+   above the dropdown) down to the bottom of the dropdown, so drifting right doesn't close it */
+.userDropdown::after {
+  content: '';
+  position: absolute;
+  left: 100%;
+  top: -44px;
+  bottom: 0;
+  width: 10px;
+}
+
 .userDropdownItem {
   display: block;
   width: 100%;
@@ -159,17 +174,21 @@
   text-align: left;
   font-size: 0.95rem;
   font-weight: 400;
-  color: var(--color-text-default);
+  color: var(--color-text-secondary);
   background: none;
   border: none;
   cursor: pointer;
   font-family: inherit;
   text-decoration: none;
-  transition: background-color 0.15s ease;
+  transition: background-color 0.15s ease, color 0.15s ease;
 }
 
 .userDropdownItem:hover:not(:disabled) {
   background-color: var(--color-surface-hovered);
+}
+
+.userDropdownItem:not(.userDropdownItemLogout):hover:not(:disabled) {
+  color: var(--color-link-default);
 }
 
 .userDropdownItem:disabled {
